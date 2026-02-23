@@ -137,4 +137,12 @@ date +"%Y-%m-%d %H:%M:%S %Z" > "$TIMESTAMP_FILE"
 # DONE - Find all files AFTER the subtracted time
 # TO BE DONE - Transfer these files.
 # Later add other folders to be archived and loop over all the folders.
-
+***********************
+list_of_folders=( \
+	"/${IMXUSR}/intra/imx/interfaces/ad_reports/" \
+	"/${IMXUSR}/intra/imx/interfaces/extranet/" \
+	"/${IMXUSR}/intra/imx/interfaces/imx2kdb/bak/" \
+	"/${IMXUSR}/intra/imx/interfaces/imx2kdb/log/" \
+	"/${IMXUSR}/intra/imx/interfaces/kdb2imx/bak/" \
+	"/${IMXUSR}/intra/imx/interfaces/kdb2imx/log/" \
+	"/${IMXUSR}/intra/imx/interfaces/reports/" )
