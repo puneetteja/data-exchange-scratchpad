@@ -1,1 +1,140 @@
+#!/bin/bash
+#. ~/.profile  >/dev/null 2>&1
+#RED_CODE="C1356"
+
+
+####################################################################################################
+####Script that copies selected files from iMX to P drive                     					####
+####Author: PTEJA                                                             					####
+####Creation Date: 2025.04.08                                                 					####
+####Updated on: ...                                                           					####
+#### 0. ad_reports			= /${IMXUSR}/intra/imx/interfaces/ad_reports/						####
+#### 1.	commission			= /imxprod/intra/imx/interfaces/ad_reports/PROV						####
+#### 2.	extranet			= /imxprod/intra/imx/interfaces/extranet/							####
+#### 3.	outgoing_payments	= /imxprod/intra/imx/interfaces/reports/pdf							####
+#### 4.	realtime			= /imxprod/intra/imx/interfaces/reports/							####
+#### 5.	risk_exposure_batch	= /imxprod/intra/imx/interfaces/ad_reports/risk_exposure_batch/		####
+####################################################################################################
+
+IMXUSR=$(whoami)
+DIRTOSEARCH=/${IMXUSR}/intra/imx/interfaces/extranet/ready/
+CONTROLDIR=/appl/alfafs_config/control_files_p_drive
+ARCHIVEDIR=/appl/alfafs_config/control_files_p_drive/control_files_archive
+PATH_TO_CUT=/${IMXUSR}/intra/imx/interfaces/
+# File to store the timestamp
+TIMESTAMP_FILE="${CONTROLDIR}/run_timestamp.txt"
+
+if [ ${IMXUSR} = "imxprod" ]; then
+	ENVIRO=P
+elif [ ${IMXUSR} = "imxuatr" ]; then
+	ENVIRO=A
+else
+	echo "This server is not setup to transfer these files. Exiting script."
+	exit
+fi
+iMX2dest=IMX2PDRIVE
+INSTI=190
+
+# Put a timestamp in the log file.
+echo -e "############"
+dt=$(date +%Y%m%d_%H%M%S)
+echo $dt
+echo "Destination environment = ${ENVIRO}"
+echo "IMXUSER = ${IMXUSR}"
+echo -e "############"
+
+# Check if the timestamp file exists
+if [ -f "$TIMESTAMP_FILE" ]; then
+    echo "Timestamp file found."
+    read_timestamp=$(cat "$TIMESTAMP_FILE")
+	echo "read_timestamp = $read_timestamp"
+    adjusted_timestamp=$(date -d "$read_timestamp - 2 minutes" +"%Y-%m-%d %H:%M:%S %Z")
+else
+    echo "Timestamp file not found. Using current time."
+    adjusted_timestamp=$(date +"%Y-%m-%d %H:%M:%S %Z")
+fi
+######################################################################
+############# HARD CODING TO GET ALL FILES - REMOVE FOR REGULAR RUNS
+#date_hc="2025-06-03 01:00:00 CEST"
+#adjusted_timestamp=$(date -d "$date_hc" +"%Y-%m-%d %H:%M:%S %Z")
+######################################################################
+
+echo "adjusted_timestamp = $adjusted_timestamp"
+
+# Define the list of folders to search
+list_of_folders=( \
+	"/${IMXUSR}/intra/imx/interfaces/ad_reports/" \
+	"/${IMXUSR}/intra/imx/interfaces/extranet/" \
+	"/${IMXUSR}/intra/imx/interfaces/imx2kdb/bak/" \
+	"/${IMXUSR}/intra/imx/interfaces/imx2kdb/log/" \
+	"/${IMXUSR}/intra/imx/interfaces/kdb2imx/bak/" \
+	"/${IMXUSR}/intra/imx/interfaces/kdb2imx/log/" \	
+	"/${IMXUSR}/intra/imx/interfaces/reports/" )
+#	"/${IMXUSR}/intra/imx/interfaces/ad_reports/risk_exposure_batch/" )
+
+
+# Initialize an array to hold the file names
+file_array=()
+
+# Populate the array with the results of the find command
+# IFS=: Clears the Internal Field Separator to avoid word splitting.
+# -r: Prevents backslash escapes from being interpreted.
+# -d '': Specifies the delimiter as null (\0), matching -print0.
+# Loop through each item in the list_of_folders
+for lof in "${list_of_folders[@]}"; do
+	while IFS= read -r -d '' fname; do
+		file_array+=("$fname")
+	done < <(find "$lof" \
+		\( -path "*/LDD" -o -path "*/IISS" -o -path "*/LDS" \) -prune -o \
+		-type f \
+		! -name "*.Z" \
+		! -name "_metainf.fmweb" \
+		-newermt "$adjusted_timestamp" \
+		-print0)
+done
+# -mtime -7 \
+
+#echo "File array = ${file_array[@]}"
+# Iterate over the array and process each file
+#knt=0
+for fname in "${file_array[@]}"
+do
+    #echo -e "fname = $fname"
+	cut_fname=$(echo "$fname" | sed "s|$PATH_TO_CUT||")
+	#echo -e "cut fname = $cut_fname"
+    pdrive_fname=$(echo "IMB_PROD_iMX_File_Storage/$cut_fname")
+	echo -e "pdrive_fname = $pdrive_fname"
+	# Replace placeholders in template file in the CONTROLDIR
+	#echo "Going to sed..."
+	sed -e "s|SOURCE_path_and_file|${fname}|" \
+		-e "s|DEST_path_and_file|$pdrive_fname|" \
+		-e "s/enviro/${ENVIRO}/" \
+		-e "s/insti/${INSTI}/" \
+		-e "s/iMX2dest/${iMX2dest}/" \
+		$CONTROLDIR/control_file_p_drive_sync > $CONTROLDIR/$dt.ctl
+	# Start file transfer using AFS
+	#echo "Going to start alfa..."
+	. /spardat/alfa/programm/amd64/.alfa
+	/spardat/alfa/programm/amd64/aafsc "-file $CONTROLDIR/$dt.ctl"
+	
+	#knt=$((knt + 1))
+	#if [ "$knt" -gt 3 ]; then
+	#	echo "Exiting after tx 3 files"
+	#	exit
+	#fi
+	mv $CONTROLDIR/$dt.ctl $ARCHIVEDIR
+done
+echo "Exiting after tx ${#file_array[@]} files"
+echo "adjusted_timestamp = $adjusted_timestamp"
+
+# Write current timestamp to file (in ISO 8601 format)
+date +"%Y-%m-%d %H:%M:%S %Z" > "$TIMESTAMP_FILE"
+
+# Next steps:
+# DONE - Write the execution time to a file. Overwrite every time.
+# DONE - Read the last execution time.
+# TO BE ADJUSTED - Subtract 1 minute from the last execution time 
+# DONE - Find all files AFTER the subtracted time
+# TO BE DONE - Transfer these files.
+# Later add other folders to be archived and loop over all the folders.
 
