@@ -1,3 +1,42 @@
+#!/bin/bash
+
+echo "$(date)"
+
+BUCKET_SRC="s3://eaut-prod-c1356-imx-holiday-calendar-0/imx/"
+BUCKET_PROCESSED="s3://eaut-prod-c1356-imx-holiday-calendar-0/imx_processed/"
+LOCAL_DIR="/imxprod/intra/imx/interfaces/bank_imx_holiday_xml/entry/"
+CUTOFF=$(date -d "48 hours ago" "+%Y-%m-%d %H:%M")
+
+# Get list of files not older than 48 hours
+mapfile -t RECENT_FILES < <(
+    s3cmd ls "$BUCKET_SRC" | while read -r perm date time size filename; do
+        file_time="$date $time"
+        if [[ "$file_time" > "$CUTOFF" ]]; then
+            echo "$filename"
+        fi
+    done
+)
+
+# Check if any recent files were found
+if [[ ${#RECENT_FILES[@]} -eq 0 ]]; then
+    echo "No files in folder not older than 48 hours to be transferred"
+    exit 0
+fi
+
+# Download, upload and delete each recent file
+for file in "${RECENT_FILES[@]}"; do
+    filename=$(basename "$file")
+
+    echo "Processing: $filename"
+
+    s3cmd get "$file" "$LOCAL_DIR"
+    s3cmd put "${LOCAL_DIR}${filename}" "$BUCKET_PROCESSED"
+    s3cmd del "$file"
+done
+
+echo "Done. ${#RECENT_FILES[@]} file(s) transferred."
+***************************************************
+
 import xml.etree.ElementTree as ET
 import sys
 
