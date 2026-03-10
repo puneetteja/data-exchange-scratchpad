@@ -1,3 +1,47 @@
+import xml.etree.ElementTree as ET
+import sys
+
+# Accept filename as input parameter
+if len(sys.argv) < 2:
+    print("Usage: python script.py <filename>")
+    sys.exit(1)
+
+filename = sys.argv[1]
+
+# Parse the file
+tree = ET.parse(filename)
+root = tree.getroot()
+
+# Detect namespace
+ns = root.tag.split("}")[0].strip("{") if "}" in root.tag else ""
+
+# Tags to remove
+tags_to_remove = ["CtryOfRes", "ClrSysMmbId"]
+tags_to_remove = [f"{{{ns}}}{tag}" if ns else tag for tag in tags_to_remove]
+
+# Remove all matching elements
+removed = 0
+for parent in root.iter():
+    for child in list(parent):
+        if child.tag in tags_to_remove:
+            parent.remove(child)
+            removed += 1
+
+print(f"Removed {removed} tag(s) from {filename}")
+
+if ns:
+    ET.register_namespace("", ns)
+
+# Save back to the same file
+tree.write(filename, xml_declaration=True, encoding="UTF-8")
+print(f"Saved to {filename}")
+```
+
+**Run it like this:**
+```
+python script.py payment.xml
+
+#########################
 #!/bin/bash
 #. ~/.profile  >/dev/null 2>&1
 #RED_CODE="C1356"
