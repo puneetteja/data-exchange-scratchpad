@@ -1,3 +1,30 @@
+def split_header_and_blocks(text):
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+
+    match = re.search(r'(?m)^:20:', text)
+    if not match:
+        raise ValueError("No :20: tag found in MT940 file")
+
+    header = text[:match.start()]
+    if header and not header.endswith("\n"):
+        header += "\n"
+
+    body = text[match.start():]
+
+    # Python 3.6 compatible: find all start positions of :20: at line start,
+    # then slice the body manually
+    starts = [m.start() for m in re.finditer(r'(?m)^:20:', body)]
+
+    if not starts:
+        return header, [body]
+
+    blocks = []
+    for i, start in enumerate(starts):
+        end = starts[i + 1] if i + 1 < len(starts) else len(body)
+        blocks.append(body[start:end])
+
+    return header, blocks
+
 [2026-05-05 17:28:36] Traceback (most recent call last):
   File "/appl/tools/BS/pt_expt_folder/mt940-correction-script/mt940-reorder.py", line 77, in <module>
     reordered = reorder_mt940_blocks(mt940_data)
