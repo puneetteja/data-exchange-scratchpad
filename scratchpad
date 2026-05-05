@@ -1,6 +1,35 @@
 def split_header_and_blocks(text):
+    """
+    MT940 files have blocks structured as:
+      {1:...}{2:...}{4:
+      :20:...
+      ...
+      -}
+    This function splits on the SWIFT envelope opener {1: at line start,
+    so each block includes its envelope header + transaction fields + terminator.
+    Falls back to splitting on :20: if no envelope is found.
+    """
     text = text.replace("\r\n", "\n").replace("\r", "\n")
 
+    # Try splitting on SWIFT envelope lines {1: at line start
+    envelope_positions = [m.start() for m in re.finditer(r'(?m)^{1:', text)]
+
+    if envelope_positions:
+        # Find where the first envelope starts — everything before is the file header
+        header = text[:envelope_positions[0]]
+        if header and not header.endswith("\n"):
+            header += "\n"
+        body = text[envelope_positions[0]:]
+
+        # Re-find positions within body
+        starts = [m.start() for m in re.finditer(r'(?m)^{1:', body)]
+        blocks = []
+        for i, start in enumerate(starts):
+            end = starts[i + 1] if i + 1 < len(starts) else len(body)
+            blocks.append(body[start:end])
+        return header, blocks
+
+    # Fallback: no envelope, split on :20:
     match = re.search(r'(?m)^:20:', text)
     if not match:
         raise ValueError("No :20: tag found in MT940 file")
@@ -8,13 +37,9 @@ def split_header_and_blocks(text):
     header = text[:match.start()]
     if header and not header.endswith("\n"):
         header += "\n"
-
     body = text[match.start():]
 
-    # Python 3.6 compatible: find all start positions of :20: at line start,
-    # then slice the body manually
     starts = [m.start() for m in re.finditer(r'(?m)^:20:', body)]
-
     if not starts:
         return header, [body]
 
@@ -22,102 +47,4 @@ def split_header_and_blocks(text):
     for i, start in enumerate(starts):
         end = starts[i + 1] if i + 1 < len(starts) else len(body)
         blocks.append(body[start:end])
-
     return header, blocks
-
-[2026-05-05 17:28:36] Traceback (most recent call last):
-  File "/appl/tools/BS/pt_expt_folder/mt940-correction-script/mt940-reorder.py", line 77, in <module>
-    reordered = reorder_mt940_blocks(mt940_data)
-  File "/appl/tools/BS/pt_expt_folder/mt940-correction-script/mt940-reorder.py", line 37, in reorder_mt940_blocks
-    header, blocks = split_header_and_blocks(mt940_text)
-  File "/appl/tools/BS/pt_expt_folder/mt940-correction-script/mt940-reorder.py", line 31, in split_header_and_blocks
-    raw_blocks = re.split(r'(?m)(?=^:20:)', body)
-  File "/usr/lib64/python3.6/re.py", line 212, in split
-    return _compile(pattern, flags).split(string, maxsplit)
-ValueError: split() requires a non-empty pattern match.
-
-import re
-import sys
-import os
-
-def parse_28c(value):
-    value = value.strip()
-    if '/' in value:
-        stmt, seq = value.split('/', 1)
-        return int(stmt), int(seq)
-    return int(value), 0
-
-def split_header_and_blocks(text):
-    """
-    Splits MT940 into:
-    - header (before first :20:, including newline)
-    - statement blocks (each starting with :20:)
-    """
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-
-    match = re.search(r'(?m)^:20:', text)
-    if not match:
-        raise ValueError("No :20: tag found in MT940 file")
-
-    header = text[:match.start()]
-    if header and not header.endswith("\n"):
-        header += "\n"
-
-    body = text[match.start():]
-
-    # Split on newline followed by :20: — avoids DOTALL+multiline anchor issues
-    raw_blocks = re.split(r'(?m)(?=^:20:)', body)
-    blocks = [b for b in raw_blocks if b.strip()]
-
-    return header, blocks
-
-def reorder_mt940_blocks(mt940_text):
-    header, blocks = split_header_and_blocks(mt940_text)
-
-    parsed_blocks = []
-    for block in blocks:
-        match = re.search(r'^:28C:(.+)$', block, flags=re.MULTILINE)
-        if not match:
-            parsed_blocks.append(((999999, 999999), block))
-            continue
-        stmt_no, seq_no = parse_28c(match.group(1))
-        parsed_blocks.append(((stmt_no, seq_no), block))
-
-    parsed_blocks.sort(key=lambda x: x[0])
-    return header + ''.join(block for _, block in parsed_blocks)
-
-def read_text_file(path):
-    try:
-        with open(path, "r", encoding="utf-8-sig") as f:  # handles BOM automatically
-            return f.read()
-    except UnicodeDecodeError:
-        with open(path, "r", encoding="cp1252") as f:
-            return f.read()
-
-# -------- Main --------
-if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} <input.mt940> <output_folder>")
-        sys.exit(1)
-
-    input_file = sys.argv[1]
-    output_dir = sys.argv[2]
-
-    if not os.path.isfile(input_file):
-        print(f"Error: input file not found: {input_file}")
-        sys.exit(1)
-
-    if not os.path.isdir(output_dir):
-        print(f"Error: output folder not found: {output_dir}")
-        sys.exit(1)
-
-    mt940_data = read_text_file(input_file)
-    reordered = reorder_mt940_blocks(mt940_data)
-
-    input_name = os.path.basename(input_file)
-    output_file = os.path.join(output_dir, f"{input_name}.reordered")
-
-    with open(output_file, "w", encoding="utf-8") as f:
-        f.write(reordered)
-
-    print(f"Reordered MT940 written to: {output_file}")
