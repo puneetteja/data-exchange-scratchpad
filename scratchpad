@@ -1,3 +1,14 @@
+[2026-05-05 17:28:36] Traceback (most recent call last):
+  File "/appl/tools/BS/pt_expt_folder/mt940-correction-script/mt940-reorder.py", line 77, in <module>
+    reordered = reorder_mt940_blocks(mt940_data)
+  File "/appl/tools/BS/pt_expt_folder/mt940-correction-script/mt940-reorder.py", line 37, in reorder_mt940_blocks
+    header, blocks = split_header_and_blocks(mt940_text)
+  File "/appl/tools/BS/pt_expt_folder/mt940-correction-script/mt940-reorder.py", line 31, in split_header_and_blocks
+    raw_blocks = re.split(r'(?m)(?=^:20:)', body)
+  File "/usr/lib64/python3.6/re.py", line 212, in split
+    return _compile(pattern, flags).split(string, maxsplit)
+ValueError: split() requires a non-empty pattern match.
+
 import re
 import sys
 import os
