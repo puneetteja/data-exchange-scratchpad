@@ -3,11 +3,11 @@ import sys
 import os
 
 def parse_28c(value):
+    value = value.strip()
     if '/' in value:
-        stmt, seq = value.split('/')
+        stmt, seq = value.split('/', 1)
         return int(stmt), int(seq)
     return int(value), 0
-
 
 def split_header_and_blocks(text):
     """
@@ -15,25 +15,21 @@ def split_header_and_blocks(text):
     - header (before first :20:, including newline)
     - statement blocks (each starting with :20:)
     """
-    # Ensure consistent newlines
-    text = text.replace("\r\n", "\n")
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
 
     match = re.search(r'(?m)^:20:', text)
     if not match:
         raise ValueError("No :20: tag found in MT940 file")
 
-    # Keep header exactly as-is, INCLUDING line break
     header = text[:match.start()]
     if header and not header.endswith("\n"):
         header += "\n"
 
     body = text[match.start():]
 
-    pattern = re.compile(
-        r'(?m)^:20:.*?(?=^:20:|\Z)',
-        re.DOTALL
-    )
-    blocks = pattern.findall(body)
+    # Split on newline followed by :20: — avoids DOTALL+multiline anchor issues
+    raw_blocks = re.split(r'(?m)(?=^:20:)', body)
+    blocks = [b for b in raw_blocks if b.strip()]
 
     return header, blocks
 
@@ -41,23 +37,20 @@ def reorder_mt940_blocks(mt940_text):
     header, blocks = split_header_and_blocks(mt940_text)
 
     parsed_blocks = []
-
     for block in blocks:
         match = re.search(r'^:28C:(.+)$', block, flags=re.MULTILINE)
         if not match:
             parsed_blocks.append(((999999, 999999), block))
             continue
-
-        stmt_no, seq_no = parse_28c(match.group(1).strip())
+        stmt_no, seq_no = parse_28c(match.group(1))
         parsed_blocks.append(((stmt_no, seq_no), block))
 
     parsed_blocks.sort(key=lambda x: x[0])
-
     return header + ''.join(block for _, block in parsed_blocks)
 
 def read_text_file(path):
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf-8-sig") as f:  # handles BOM automatically
             return f.read()
     except UnicodeDecodeError:
         with open(path, "r", encoding="cp1252") as f:
@@ -81,9 +74,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     mt940_data = read_text_file(input_file)
-#    with open(input_file, "r", encoding="utf-8-sig") as f:
-#        mt940_data = f.read()
-
     reordered = reorder_mt940_blocks(mt940_data)
 
     input_name = os.path.basename(input_file)
