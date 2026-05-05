@@ -1,227 +1,95 @@
-#!/bin/bash
-
-echo "$(date)"
-
-BUCKET_SRC="s3://eaut-prod-c1356-imx-holiday-calendar-0/imx/"
-BUCKET_PROCESSED="s3://eaut-prod-c1356-imx-holiday-calendar-0/imx_processed/"
-LOCAL_DIR="/imxprod/intra/imx/interfaces/bank_imx_holiday_xml/entry/"
-CUTOFF=$(date -d "48 hours ago" "+%Y-%m-%d %H:%M")
-
-# Get the latest file not older than 48 hours
-LATEST_FILE=$(
-    s3cmd ls "$BUCKET_SRC" | while read -r perm date time size filename; do
-        file_time="$date $time"
-        if [[ "$file_time" > "$CUTOFF" ]]; then
-            echo "$file_time $filename"
-        fi
-    done | sort | tail -1 | awk '{print $NF}'
-)
-
-# Check if a recent file was found
-if [[ -z "$LATEST_FILE" ]]; then
-    echo "No files in folder not older than 48 hours to be transferred"
-    exit 0
-fi
-
-filename=$(basename "$LATEST_FILE")
-echo "Processing latest file: $filename"
-
-s3cmd get "$LATEST_FILE" "$LOCAL_DIR"
-s3cmd put "${LOCAL_DIR}${filename}" "$BUCKET_PROCESSED"
-s3cmd del "$LATEST_FILE"
-
-echo "Done. Transferred: $filename"
-***************************************************
-
-import xml.etree.ElementTree as ET
+import re
 import sys
+import os
 
-# Accept filename as input parameter
-if len(sys.argv) < 2:
-    print("Usage: python script.py <filename>")
-    sys.exit(1)
-
-filename = sys.argv[1]
-
-# Parse the file
-tree = ET.parse(filename)
-root = tree.getroot()
-
-# Detect namespace
-ns = root.tag.split("}")[0].strip("{") if "}" in root.tag else ""
-
-# Tags to remove
-tags_to_remove = ["CtryOfRes", "ClrSysMmbId"]
-tags_to_remove = [f"{{{ns}}}{tag}" if ns else tag for tag in tags_to_remove]
-
-# Remove all matching elements
-removed = 0
-for parent in root.iter():
-    for child in list(parent):
-        if child.tag in tags_to_remove:
-            parent.remove(child)
-            removed += 1
-
-print(f"Removed {removed} tag(s) from {filename}")
-
-if ns:
-    ET.register_namespace("", ns)
-
-# Save back to the same file
-tree.write(filename, xml_declaration=True, encoding="UTF-8")
-print(f"Saved to {filename}")
-```
-
-**Run it like this:**
-```
-python script.py payment.xml
-
-#########################
-#!/bin/bash
-#. ~/.profile  >/dev/null 2>&1
-#RED_CODE="C1356"
+def parse_28c(value):
+    if '/' in value:
+        stmt, seq = value.split('/')
+        return int(stmt), int(seq)
+    return int(value), 0
 
 
-####################################################################################################
-####Script that copies selected files from iMX to P drive                     					####
-####Author: PTEJA                                                             					####
-####Creation Date: 2025.04.08                                                 					####
-####Updated on: ...                                                           					####
-#### 0. ad_reports			= /${IMXUSR}/intra/imx/interfaces/ad_reports/						####
-#### 1.	commission			= /imxprod/intra/imx/interfaces/ad_reports/PROV						####
-#### 2.	extranet			= /imxprod/intra/imx/interfaces/extranet/							####
-#### 3.	outgoing_payments	= /imxprod/intra/imx/interfaces/reports/pdf							####
-#### 4.	realtime			= /imxprod/intra/imx/interfaces/reports/							####
-#### 5.	risk_exposure_batch	= /imxprod/intra/imx/interfaces/ad_reports/risk_exposure_batch/		####
-####################################################################################################
+def split_header_and_blocks(text):
+    """
+    Splits MT940 into:
+    - header (before first :20:, including newline)
+    - statement blocks (each starting with :20:)
+    """
+    # Ensure consistent newlines
+    text = text.replace("\r\n", "\n")
 
-IMXUSR=$(whoami)
-DIRTOSEARCH=/${IMXUSR}/intra/imx/interfaces/extranet/ready/
-CONTROLDIR=/appl/alfafs_config/control_files_p_drive
-ARCHIVEDIR=/appl/alfafs_config/control_files_p_drive/control_files_archive
-PATH_TO_CUT=/${IMXUSR}/intra/imx/interfaces/
-# File to store the timestamp
-TIMESTAMP_FILE="${CONTROLDIR}/run_timestamp.txt"
+    match = re.search(r'(?m)^:20:', text)
+    if not match:
+        raise ValueError("No :20: tag found in MT940 file")
 
-if [ ${IMXUSR} = "imxprod" ]; then
-	ENVIRO=P
-elif [ ${IMXUSR} = "imxuatr" ]; then
-	ENVIRO=A
-else
-	echo "This server is not setup to transfer these files. Exiting script."
-	exit
-fi
-iMX2dest=IMX2PDRIVE
-INSTI=190
+    # Keep header exactly as-is, INCLUDING line break
+    header = text[:match.start()]
+    if header and not header.endswith("\n"):
+        header += "\n"
 
-# Put a timestamp in the log file.
-echo -e "############"
-dt=$(date +%Y%m%d_%H%M%S)
-echo $dt
-echo "Destination environment = ${ENVIRO}"
-echo "IMXUSER = ${IMXUSR}"
-echo -e "############"
+    body = text[match.start():]
 
-# Check if the timestamp file exists
-if [ -f "$TIMESTAMP_FILE" ]; then
-    echo "Timestamp file found."
-    read_timestamp=$(cat "$TIMESTAMP_FILE")
-	echo "read_timestamp = $read_timestamp"
-    adjusted_timestamp=$(date -d "$read_timestamp - 2 minutes" +"%Y-%m-%d %H:%M:%S %Z")
-else
-    echo "Timestamp file not found. Using current time."
-    adjusted_timestamp=$(date +"%Y-%m-%d %H:%M:%S %Z")
-fi
-######################################################################
-############# HARD CODING TO GET ALL FILES - REMOVE FOR REGULAR RUNS
-#date_hc="2025-06-03 01:00:00 CEST"
-#adjusted_timestamp=$(date -d "$date_hc" +"%Y-%m-%d %H:%M:%S %Z")
-######################################################################
+    pattern = re.compile(
+        r'(?m)^:20:.*?(?=^:20:|\Z)',
+        re.DOTALL
+    )
+    blocks = pattern.findall(body)
 
-echo "adjusted_timestamp = $adjusted_timestamp"
+    return header, blocks
 
-# Define the list of folders to search
-list_of_folders=( \
-	"/${IMXUSR}/intra/imx/interfaces/ad_reports/" \
-	"/${IMXUSR}/intra/imx/interfaces/extranet/" \
-	"/${IMXUSR}/intra/imx/interfaces/imx2kdb/bak/" \
-	"/${IMXUSR}/intra/imx/interfaces/imx2kdb/log/" \
-	"/${IMXUSR}/intra/imx/interfaces/kdb2imx/bak/" \
-	"/${IMXUSR}/intra/imx/interfaces/kdb2imx/log/" \	
-	"/${IMXUSR}/intra/imx/interfaces/reports/" )
-#	"/${IMXUSR}/intra/imx/interfaces/ad_reports/risk_exposure_batch/" )
+def reorder_mt940_blocks(mt940_text):
+    header, blocks = split_header_and_blocks(mt940_text)
 
+    parsed_blocks = []
 
-# Initialize an array to hold the file names
-file_array=()
+    for block in blocks:
+        match = re.search(r'^:28C:(.+)$', block, flags=re.MULTILINE)
+        if not match:
+            parsed_blocks.append(((999999, 999999), block))
+            continue
 
-# Populate the array with the results of the find command
-# IFS=: Clears the Internal Field Separator to avoid word splitting.
-# -r: Prevents backslash escapes from being interpreted.
-# -d '': Specifies the delimiter as null (\0), matching -print0.
-# Loop through each item in the list_of_folders
-for lof in "${list_of_folders[@]}"; do
-	while IFS= read -r -d '' fname; do
-		file_array+=("$fname")
-	done < <(find "$lof" \
-		\( -path "*/LDD" -o -path "*/IISS" -o -path "*/LDS" \) -prune -o \
-		-type f \
-		! -name "*.Z" \
-		! -name "_metainf.fmweb" \
-		-newermt "$adjusted_timestamp" \
-		-print0)
-done
-# -mtime -7 \
+        stmt_no, seq_no = parse_28c(match.group(1).strip())
+        parsed_blocks.append(((stmt_no, seq_no), block))
 
-#echo "File array = ${file_array[@]}"
-# Iterate over the array and process each file
-#knt=0
-for fname in "${file_array[@]}"
-do
-    #echo -e "fname = $fname"
-	cut_fname=$(echo "$fname" | sed "s|$PATH_TO_CUT||")
-	#echo -e "cut fname = $cut_fname"
-    pdrive_fname=$(echo "IMB_PROD_iMX_File_Storage/$cut_fname")
-	echo -e "pdrive_fname = $pdrive_fname"
-	# Replace placeholders in template file in the CONTROLDIR
-	#echo "Going to sed..."
-	sed -e "s|SOURCE_path_and_file|${fname}|" \
-		-e "s|DEST_path_and_file|$pdrive_fname|" \
-		-e "s/enviro/${ENVIRO}/" \
-		-e "s/insti/${INSTI}/" \
-		-e "s/iMX2dest/${iMX2dest}/" \
-		$CONTROLDIR/control_file_p_drive_sync > $CONTROLDIR/$dt.ctl
-	# Start file transfer using AFS
-	#echo "Going to start alfa..."
-	. /spardat/alfa/programm/amd64/.alfa
-	/spardat/alfa/programm/amd64/aafsc "-file $CONTROLDIR/$dt.ctl"
-	
-	#knt=$((knt + 1))
-	#if [ "$knt" -gt 3 ]; then
-	#	echo "Exiting after tx 3 files"
-	#	exit
-	#fi
-	mv $CONTROLDIR/$dt.ctl $ARCHIVEDIR
-done
-echo "Exiting after tx ${#file_array[@]} files"
-echo "adjusted_timestamp = $adjusted_timestamp"
+    parsed_blocks.sort(key=lambda x: x[0])
 
-# Write current timestamp to file (in ISO 8601 format)
-date +"%Y-%m-%d %H:%M:%S %Z" > "$TIMESTAMP_FILE"
+    return header + ''.join(block for _, block in parsed_blocks)
 
-# Next steps:
-# DONE - Write the execution time to a file. Overwrite every time.
-# DONE - Read the last execution time.
-# TO BE ADJUSTED - Subtract 1 minute from the last execution time 
-# DONE - Find all files AFTER the subtracted time
-# TO BE DONE - Transfer these files.
-# Later add other folders to be archived and loop over all the folders.
-***********************
-list_of_folders=( \
-	"/${IMXUSR}/intra/imx/interfaces/ad_reports/" \
-	"/${IMXUSR}/intra/imx/interfaces/extranet/" \
-	"/${IMXUSR}/intra/imx/interfaces/imx2kdb/bak/" \
-	"/${IMXUSR}/intra/imx/interfaces/imx2kdb/log/" \
-	"/${IMXUSR}/intra/imx/interfaces/kdb2imx/bak/" \
-	"/${IMXUSR}/intra/imx/interfaces/kdb2imx/log/" \
-	"/${IMXUSR}/intra/imx/interfaces/reports/" )
+def read_text_file(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except UnicodeDecodeError:
+        with open(path, "r", encoding="cp1252") as f:
+            return f.read()
+
+# -------- Main --------
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print(f"Usage: {sys.argv[0]} <input.mt940> <output_folder>")
+        sys.exit(1)
+
+    input_file = sys.argv[1]
+    output_dir = sys.argv[2]
+
+    if not os.path.isfile(input_file):
+        print(f"Error: input file not found: {input_file}")
+        sys.exit(1)
+
+    if not os.path.isdir(output_dir):
+        print(f"Error: output folder not found: {output_dir}")
+        sys.exit(1)
+
+    mt940_data = read_text_file(input_file)
+#    with open(input_file, "r", encoding="utf-8-sig") as f:
+#        mt940_data = f.read()
+
+    reordered = reorder_mt940_blocks(mt940_data)
+
+    input_name = os.path.basename(input_file)
+    output_file = os.path.join(output_dir, f"{input_name}.reordered")
+
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(reordered)
+
+    print(f"Reordered MT940 written to: {output_file}")
