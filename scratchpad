@@ -1,3 +1,7 @@
 def contains_target_account(mt940_text):
+    matches = re.findall(r"^:25:(.+)$", mt940_text, flags=re.MULTILINE)
+    return any(TARGET_ACCOUNT in m.strip() for m in matches)
+
+def contains_target_account(mt940_text):
     match = re.search(r"^:25:(.+)$", mt940_text, flags=re.MULTILINE)
     return bool(match and TARGET_ACCOUNT in match.group(1))
