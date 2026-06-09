@@ -1,15 +1,66 @@
-def contains_target_account(mt940_text):
-    mt940_text = mt940_text.replace("\r\n", "\n").replace("\r", "\n")
-    matches = re.findall(r"^:25:(.+)$", mt940_text, flags=re.MULTILINE)
-    return any(TARGET_ACCOUNT in m.strip() for m in matches)
+#!/bin/bash -x
+. ~/.profile >/dev/null 2>&1
 
-TARGET_ACCOUNT = 00496000001
-2026-05-06 11:56:21,074 [INFO] mt940_data = {1:F01GIBAATWGBXXX4900894645}{2:O9402330260504BKAUATWW2XXX26774053272605042330N}{4::20:20260504/K402711:25://AT12000/00496000001/EUR:28C:009/001:60F:C260430EUR0,:61:2605040504D52,NCHG000000104251//161240500007702:86:808?00Gebuehren?1009999?20EB-Teilnahmegebuehr 04/2026?22Anschluss MBS mit Fremdsoft?23ware?24Teilnahme von 01.04.2026 bi?25s 30.04.2026?3012000?3100009050037?32UniCredit Bank Austria AG:61:2605040504D24,NCHG000000318213//161240500042615:86:808?00Gebuehren?1009999?20BusinessNet Basic Gebuehr 0?214/2026?22BusinessNet Basic lt. Verei?23nbarung?24Monatsgebuehr 04/26 EUR 20,?2500 +20P USt EUR 4,00 Rechnu?26ngsnummer BN 61240004261 Au?27sstellungsdatum: 04.05.2026?3012000?3100009050051?32UniCredit Bank Austria AG:61:2605040504D23,NCHG000002121347//161240500356433:86:805?00Abschluss?1009999?20EBICS 04/2026?22Monatliche Kosten fuer . EB?23ICS?24Fuer den Zeitraum 01.04.202?256 - 30.04.2026?3012000?3100009050037?32UniCredit Bank Austria AG:62F:D260504EUR99,-}
+mydadat=$(date +%d/%m/%y)
+mydadatum=`echo ${mydadat}|sed 's/\//_/g'`
+mydadate=$(date +%d/%m/%y_%H:%M| sed 's/\(:[0-9][0-9]\)[0-9]*$/\1/' | sed 's/_/ /')
+valdat=`echo ${mydadate}`
+mydadat_mid=`echo ${mydadat}| sed 's/$/ 00:00/'`
+if [[ `ls  /appl/tools/PK/mt940_lasttime_${mydadatum} 2>/dev/null| wc -l` -eq 0 ]]
+then
+rm -f /appl/tools/PK/mt940_lasttime_*
+touch /appl/tools/PK/mt940_lasttime_${mydadatum}
+echo ${mydadat_mid} > /appl/tools/PK/mt940_lasttime_${mydadatum}
+valdatt=`cat /appl/tools/PK/mt940_lasttime_${mydadatum} | tail -n1`
+else
+valdatt=`cat /appl/tools/PK/mt940_lasttime_${mydadatum} | tail -n1`
+fi
 
-def contains_target_account(mt940_text):
-    matches = re.findall(r"^:25:(.+)$", mt940_text, flags=re.MULTILINE)
-    return any(TARGET_ACCOUNT in m.strip() for m in matches)
 
-def contains_target_account(mt940_text):
-    match = re.search(r"^:25:(.+)$", mt940_text, flags=re.MULTILINE)
-    return bool(match and TARGET_ACCOUNT in match.group(1))
+
+/imxprod/intra/mw/as/bin/sqlplus -s /@c10   <<EOF > /appl/tools/PK/mt940_err_$(date +%d-%m-%y).txt
+
+set lines 999
+set pages 9999
+set colsep ";"
+SET TRIMOUT ON
+set trimspool on
+set feedback off
+set echo off
+set headsep off
+set underline off
+SET NEWPAGE NONE
+set linesize 9999
+set pagesize 50000
+col Interface format a20
+col File format a120
+col Status format a30
+col Execution_Time format a30
+alter session set nls_date_format='DD/MM/YY HH24:MI:SS';
+
+select distinct
+case
+when interface='swift2imx' then 'MT940'
+else interface
+end
+ Interface  , fichier as "File",  datetrait as "Execution_Time",  erreur as "Status" from t_log where  datetrait > '${valdatt}'  and interface = 'swift2imx'
+  and erreur  !='TERMINATED'
+  and fichier not like '%fmweb%'
+order by datetrait, interface asc;
+
+exit;
+EOF
+
+
+if [[ `cat  /appl/tools/PK/mt940_err_$(date +%d-%m-%y).txt | egrep -i "warning|error" | wc -l` -gt 0 ]]
+then
+for i in `cat /appl/tools/PK/mt940_err_$(date +%d-%m-%y).txt | egrep -i "warning|error" | awk -F";" '{print $2}'`; do ls -l $IMX_INTERFACES/swift2imx/control/${i}*; done | egrep -i "rjt|ko" | awk -F"/" '{print $8}'  > /appl/tools/PK/faulty_withsfx.txt
+cat  /appl/tools/PK/faulty_withsfx.txt | awk '{print "MT940 files that were either RJT or KO ---> "$1}'  | mailx -r imxprod@erstegroup.com -s "iMX PROD - Error/Warning - MT940" -c gmopimx@erstegroup.com MLHelpdeskIMB@intermarket.at
+else
+echo  "no errors" >/dev/null
+fi
+
+echo ${valdat} >>/appl/tools/PK/mt940_lasttime_${mydadatum}
+exit
+
+
