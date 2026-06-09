@@ -1,66 +1,117 @@
-#!/bin/bash -x
+#!/bin/bash
+# =============================================================================
+# MT940 Error Monitor — sends email only when RJT/KO files are found
+# =============================================================================
+
+set -euo pipefail
 . ~/.profile >/dev/null 2>&1
 
-mydadat=$(date +%d/%m/%y)
-mydadatum=`echo ${mydadat}|sed 's/\//_/g'`
-mydadate=$(date +%d/%m/%y_%H:%M| sed 's/\(:[0-9][0-9]\)[0-9]*$/\1/' | sed 's/_/ /')
-valdat=`echo ${mydadate}`
-mydadat_mid=`echo ${mydadat}| sed 's/$/ 00:00/'`
-if [[ `ls  /appl/tools/PK/mt940_lasttime_${mydadatum} 2>/dev/null| wc -l` -eq 0 ]]
-then
-rm -f /appl/tools/PK/mt940_lasttime_*
-touch /appl/tools/PK/mt940_lasttime_${mydadatum}
-echo ${mydadat_mid} > /appl/tools/PK/mt940_lasttime_${mydadatum}
-valdatt=`cat /appl/tools/PK/mt940_lasttime_${mydadatum} | tail -n1`
-else
-valdatt=`cat /appl/tools/PK/mt940_lasttime_${mydadatum} | tail -n1`
+# --- Constants ---------------------------------------------------------------
+TOOLS_DIR="/appl/tools/PK"
+SQLPLUS="/imxprod/intra/mw/as/bin/sqlplus"
+MAIL_FROM="imxprod@erstegroup.com"
+MAIL_CC="gmopimx@erstegroup.com haha@abc.com"
+MAIL_TO="MLHelpdeskIMB@intermarket.at"
+MAIL_SUBJECT="iMX PROD - Error/Warning - MT940"
+SWIFT_CTRL_DIR="${IMX_INTERFACES}/swift2imx/control"
+
+# --- Date variables ----------------------------------------------------------
+DATE_SLASH=$(date +%d/%m/%y)                             # e.g. 04/12/24
+DATE_UNDER=$(date +%d_%m_%y)                             # e.g. 04_12_24  (safe for filenames)
+DATE_FILE=$(date +%d-%m-%y)                              # e.g. 04-12-24  (for error log filename)
+DATE_DISPLAY=$(date +"%d/%m/%y %H:%M")                   # e.g. 04/12/24 14:35
+
+LASTTIME_FILE="${TOOLS_DIR}/mt940_lasttime_${DATE_UNDER}"
+ERROR_LOG="${TOOLS_DIR}/mt940_err_${DATE_FILE}.txt"
+FAULTY_FILE="${TOOLS_DIR}/faulty_withsfx.txt"
+
+# --- Determine last run timestamp --------------------------------------------
+# If no lasttime file exists for today, clean up old ones and create a new one
+# seeded with midnight of the current day (so we catch all of today's entries).
+if [[ ! -f "${LASTTIME_FILE}" ]]; then
+    rm -f "${TOOLS_DIR}"/mt940_lasttime_*
+    touch "${LASTTIME_FILE}"
+    echo "${DATE_SLASH} 00:00" > "${LASTTIME_FILE}"
 fi
 
+# Always read the last line — on subsequent runs this will be the previous
+# execution timestamp written at the bottom of this script.
+LAST_RUN=$(tail -n1 "${LASTTIME_FILE}")
 
-
-/imxprod/intra/mw/as/bin/sqlplus -s /@c10   <<EOF > /appl/tools/PK/mt940_err_$(date +%d-%m-%y).txt
-
-set lines 999
-set pages 9999
-set colsep ";"
-SET TRIMOUT ON
+# --- Query Oracle for MT940 errors/warnings since last run -------------------
+"${SQLPLUS}" -s /@c10 <<EOF > "${ERROR_LOG}"
+set lines     9999
+set pages     50000
+set colsep    ";"
+set trimout   on
 set trimspool on
-set feedback off
-set echo off
-set headsep off
+set feedback  off
+set echo      off
+set headsep   off
 set underline off
-SET NEWPAGE NONE
-set linesize 9999
-set pagesize 50000
-col Interface format a20
-col File format a120
-col Status format a30
+set newpage   none
+col Interface      format a20
+col File           format a120
+col Status         format a30
 col Execution_Time format a30
 alter session set nls_date_format='DD/MM/YY HH24:MI:SS';
 
 select distinct
-case
-when interface='swift2imx' then 'MT940'
-else interface
-end
- Interface  , fichier as "File",  datetrait as "Execution_Time",  erreur as "Status" from t_log where  datetrait > '${valdatt}'  and interface = 'swift2imx'
-  and erreur  !='TERMINATED'
+    case when interface = 'swift2imx' then 'MT940' else interface end as "Interface",
+    fichier       as "File",
+    datetrait     as "Execution_Time",
+    erreur        as "Status"
+from t_log
+where datetrait  > '${LAST_RUN}'
+  and interface  = 'swift2imx'
+  and erreur    != 'TERMINATED'
   and fichier not like '%fmweb%'
 order by datetrait, interface asc;
 
 exit;
 EOF
 
+# --- Check for warning/error lines in the query output ----------------------
+if grep -qiE "warning|error" "${ERROR_LOG}"; then
 
-if [[ `cat  /appl/tools/PK/mt940_err_$(date +%d-%m-%y).txt | egrep -i "warning|error" | wc -l` -gt 0 ]]
-then
-for i in `cat /appl/tools/PK/mt940_err_$(date +%d-%m-%y).txt | egrep -i "warning|error" | awk -F";" '{print $2}'`; do ls -l $IMX_INTERFACES/swift2imx/control/${i}*; done | egrep -i "rjt|ko" | awk -F"/" '{print $8}'  > /appl/tools/PK/faulty_withsfx.txt
-cat  /appl/tools/PK/faulty_withsfx.txt | awk '{print "MT940 files that were either RJT or KO ---> "$1}'  | mailx -r imxprod@erstegroup.com -s "iMX PROD - Error/Warning - MT940" -c gmopimx@erstegroup.com MLHelpdeskIMB@intermarket.at
+    # Extract filenames of RJT or KO control files that are non-zero in size
+    grep -iE "warning|error" "${ERROR_LOG}" \
+        | awk -F";" '{print $2}' \
+        | while read -r fname; do
+            ls -1 "${SWIFT_CTRL_DIR}/${fname}"* 2>/dev/null
+          done \
+        | grep -iE "rjt|ko" \
+        | while read -r fpath; do
+            [[ -s "${fpath}" ]] && echo "${fpath}"
+          done \
+        | awk -F"/" '{print $NF}' \
+        > "${FAULTY_FILE}"
+
+    # --- Send email only if faulty files were actually found -----------------
+    if [[ -s "${FAULTY_FILE}" ]]; then
+        {
+            echo "The following MT940 files were rejected (RJT) or failed (KO):"
+            echo ""
+            awk '{print "  --> "$1}' "${FAULTY_FILE}"
+            echo ""
+            echo "Query window: ${LAST_RUN}  →  ${DATE_DISPLAY}"
+        } | mailx \
+            -r "${MAIL_FROM}" \
+            -s "${MAIL_SUBJECT}" \
+            -c "gmopimx@erstegroup.com" \
+            -c "haha@abc.com" \
+            "${MAIL_TO}"
+
+        echo "[$(date)] Email sent — $(wc -l < "${FAULTY_FILE}") faulty file(s) found." >&2
+    else
+        echo "[$(date)] Errors/warnings found in log but no RJT/KO control files matched." >&2
+    fi
+
 else
-echo  "no errors" >/dev/null
+    echo "[$(date)] No errors or warnings found." >&2
 fi
 
-echo ${valdat} >>/appl/tools/PK/mt940_lasttime_${mydadatum}
-exit
+# --- Update lasttime file with current timestamp for next run ----------------
+echo "${DATE_DISPLAY}" >> "${LASTTIME_FILE}"
 
-
+exit 0
