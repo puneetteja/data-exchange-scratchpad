@@ -77,12 +77,28 @@ def reorder_mt940_blocks(mt940_text):
     return header + ''.join(block for _, block in parsed_blocks)
 
 def read_text_file(path):
+    """
+    Read the file and return (content, encoding_used).
+    First attempts UTF-8 (with BOM stripping), then falls back to cp1252.
+    Prints the detected encoding to stdout.
+    """
     try:
-        with open(path, "r", encoding="utf-8-sig") as f:  # handles BOM automatically
-            return f.read()
+        with open(path, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+        # Distinguish plain UTF-8 from UTF-8-with-BOM for accurate reporting
+        with open(path, "rb") as f:
+            raw_start = f.read(3)
+        encoding_used = "utf-8-sig (BOM detected)" if raw_start.startswith(b'\xef\xbb\xbf') else "utf-8"
+        # Normalise to plain utf-8 for the output open() call when no BOM present
+        output_encoding = "utf-8-sig" if raw_start.startswith(b'\xef\xbb\xbf') else "utf-8"
     except UnicodeDecodeError:
         with open(path, "r", encoding="cp1252") as f:
-            return f.read()
+            content = f.read()
+        encoding_used = "cp1252"
+        output_encoding = "cp1252"
+
+    print(f"Input file encoding: {encoding_used}")
+    return content, output_encoding
 
 def contains_dash_only_line(mt940_data: str) -> bool:
     return bool(re.search(r'(?m)^\s*-\s*$', mt940_data))
@@ -92,6 +108,7 @@ def remove_dash_only_lines(mt940_data: str) -> str:
         line for line in mt940_data.splitlines()
         if line.strip() != "-"
     )
+
 # -------- Main --------
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -109,23 +126,25 @@ if __name__ == "__main__":
         print(f"Error: output folder not found: {output_dir}")
         sys.exit(1)
 
-    mt940_data = read_text_file(input_file)
-    
+    mt940_data, file_encoding = read_text_file(input_file)
+
     if contains_dash_only_line(mt940_data):
         mt940_data_no_minus = remove_dash_only_lines(mt940_data)
         input_name = os.path.basename(input_file)
         output_file = os.path.join(output_dir, f"{input_name}.minus_removed")
-        with open(output_file, "w", encoding="utf-8") as f:
+        with open(output_file, "w", encoding=file_encoding) as f:
             f.write(mt940_data_no_minus)
             print(f"Removed - from MT940 and written to: {output_file}")
+            print(f"Output file encoding: {file_encoding}")
             sys.exit(0)
-        
+
     reordered = reorder_mt940_blocks(mt940_data)
 
     input_name = os.path.basename(input_file)
     output_file = os.path.join(output_dir, f"{input_name}.reordered")
 
-    with open(output_file, "w", encoding="utf-8") as f:
+    with open(output_file, "w", encoding=file_encoding) as f:
         f.write(reordered)
 
     print(f"Reordered MT940 written to: {output_file}")
+    print(f"Output file encoding: {file_encoding}")
