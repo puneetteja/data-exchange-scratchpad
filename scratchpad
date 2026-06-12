@@ -1,117 +1,131 @@
-#!/bin/bash
-# =============================================================================
-# MT940 Error Monitor — sends email only when RJT/KO files are found
-# =============================================================================
+import re
+import sys
+import os
 
-set -euo pipefail
-. ~/.profile >/dev/null 2>&1
+def parse_28c(value):
+    value = value.strip()
+    if '/' in value:
+        stmt, seq = value.split('/', 1)
+        return int(stmt), int(seq)
+    return int(value), 0
+###
+def split_header_and_blocks(text):
+    """
+    MT940 files have blocks structured as:
+      {1:...}{2:...}{4:
+      :20:...
+      ...
+      -}
+    This function splits on the SWIFT envelope opener {1: at line start,
+    so each block includes its envelope header + transaction fields + terminator.
+    Falls back to splitting on :20: if no envelope is found.
+    """
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
 
-# --- Constants ---------------------------------------------------------------
-TOOLS_DIR="/appl/tools/PK"
-SQLPLUS="/imxprod/intra/mw/as/bin/sqlplus"
-MAIL_FROM="imxprod@erstegroup.com"
-MAIL_CC="gmopimx@erstegroup.com haha@abc.com"
-MAIL_TO="MLHelpdeskIMB@intermarket.at"
-MAIL_SUBJECT="iMX PROD - Error/Warning - MT940"
-SWIFT_CTRL_DIR="${IMX_INTERFACES}/swift2imx/control"
+    # Try splitting on SWIFT envelope lines {1: at line start
+    envelope_positions = [m.start() for m in re.finditer(r'(?m)^{1:', text)]
 
-# --- Date variables ----------------------------------------------------------
-DATE_SLASH=$(date +%d/%m/%y)                             # e.g. 04/12/24
-DATE_UNDER=$(date +%d_%m_%y)                             # e.g. 04_12_24  (safe for filenames)
-DATE_FILE=$(date +%d-%m-%y)                              # e.g. 04-12-24  (for error log filename)
-DATE_DISPLAY=$(date +"%d/%m/%y %H:%M")                   # e.g. 04/12/24 14:35
+    if envelope_positions:
+        # Find where the first envelope starts — everything before is the file header
+        header = text[:envelope_positions[0]]
+        if header and not header.endswith("\n"):
+            header += "\n"
+        body = text[envelope_positions[0]:]
 
-LASTTIME_FILE="${TOOLS_DIR}/mt940_lasttime_${DATE_UNDER}"
-ERROR_LOG="${TOOLS_DIR}/mt940_err_${DATE_FILE}.txt"
-FAULTY_FILE="${TOOLS_DIR}/faulty_withsfx.txt"
+        # Re-find positions within body
+        starts = [m.start() for m in re.finditer(r'(?m)^{1:', body)]
+        blocks = []
+        for i, start in enumerate(starts):
+            end = starts[i + 1] if i + 1 < len(starts) else len(body)
+            blocks.append(body[start:end])
+        return header, blocks
 
-# --- Determine last run timestamp --------------------------------------------
-# If no lasttime file exists for today, clean up old ones and create a new one
-# seeded with midnight of the current day (so we catch all of today's entries).
-if [[ ! -f "${LASTTIME_FILE}" ]]; then
-    rm -f "${TOOLS_DIR}"/mt940_lasttime_*
-    touch "${LASTTIME_FILE}"
-    echo "${DATE_SLASH} 00:00" > "${LASTTIME_FILE}"
-fi
+    # Fallback: no envelope, split on :20:
+    match = re.search(r'(?m)^:20:', text)
+    if not match:
+        raise ValueError("No :20: tag found in MT940 file")
 
-# Always read the last line — on subsequent runs this will be the previous
-# execution timestamp written at the bottom of this script.
-LAST_RUN=$(tail -n1 "${LASTTIME_FILE}")
+    header = text[:match.start()]
+    if header and not header.endswith("\n"):
+        header += "\n"
+    body = text[match.start():]
 
-# --- Query Oracle for MT940 errors/warnings since last run -------------------
-"${SQLPLUS}" -s /@c10 <<EOF > "${ERROR_LOG}"
-set lines     9999
-set pages     50000
-set colsep    ";"
-set trimout   on
-set trimspool on
-set feedback  off
-set echo      off
-set headsep   off
-set underline off
-set newpage   none
-col Interface      format a20
-col File           format a120
-col Status         format a30
-col Execution_Time format a30
-alter session set nls_date_format='DD/MM/YY HH24:MI:SS';
+    starts = [m.start() for m in re.finditer(r'(?m)^:20:', body)]
+    if not starts:
+        return header, [body]
 
-select distinct
-    case when interface = 'swift2imx' then 'MT940' else interface end as "Interface",
-    fichier       as "File",
-    datetrait     as "Execution_Time",
-    erreur        as "Status"
-from t_log
-where datetrait  > '${LAST_RUN}'
-  and interface  = 'swift2imx'
-  and erreur    != 'TERMINATED'
-  and fichier not like '%fmweb%'
-order by datetrait, interface asc;
+    blocks = []
+    for i, start in enumerate(starts):
+        end = starts[i + 1] if i + 1 < len(starts) else len(body)
+        blocks.append(body[start:end])
+    return header, blocks
+###
+   
+def reorder_mt940_blocks(mt940_text):
+    header, blocks = split_header_and_blocks(mt940_text)
 
-exit;
-EOF
+    parsed_blocks = []
+    for block in blocks:
+        match = re.search(r'^:28C:(.+)$', block, flags=re.MULTILINE)
+        if not match:
+            parsed_blocks.append(((999999, 999999), block))
+            continue
+        stmt_no, seq_no = parse_28c(match.group(1))
+        parsed_blocks.append(((stmt_no, seq_no), block))
 
-# --- Check for warning/error lines in the query output ----------------------
-if grep -qiE "warning|error" "${ERROR_LOG}"; then
+    parsed_blocks.sort(key=lambda x: x[0])
+    return header + ''.join(block for _, block in parsed_blocks)
 
-    # Extract filenames of RJT or KO control files that are non-zero in size
-    grep -iE "warning|error" "${ERROR_LOG}" \
-        | awk -F";" '{print $2}' \
-        | while read -r fname; do
-            ls -1 "${SWIFT_CTRL_DIR}/${fname}"* 2>/dev/null
-          done \
-        | grep -iE "rjt|ko" \
-        | while read -r fpath; do
-            [[ -s "${fpath}" ]] && echo "${fpath}"
-          done \
-        | awk -F"/" '{print $NF}' \
-        > "${FAULTY_FILE}"
+def read_text_file(path):
+    try:
+        with open(path, "r", encoding="utf-8-sig") as f:  # handles BOM automatically
+            return f.read()
+    except UnicodeDecodeError:
+        with open(path, "r", encoding="cp1252") as f:
+            return f.read()
 
-    # --- Send email only if faulty files were actually found -----------------
-    if [[ -s "${FAULTY_FILE}" ]]; then
-        {
-            echo "The following MT940 files were rejected (RJT) or failed (KO):"
-            echo ""
-            awk '{print "  --> "$1}' "${FAULTY_FILE}"
-            echo ""
-            echo "Query window: ${LAST_RUN}  →  ${DATE_DISPLAY}"
-        } | mailx \
-            -r "${MAIL_FROM}" \
-            -s "${MAIL_SUBJECT}" \
-            -c "gmopimx@erstegroup.com" \
-            -c "haha@abc.com" \
-            "${MAIL_TO}"
+def contains_dash_only_line(mt940_data: str) -> bool:
+    return bool(re.search(r'(?m)^\s*-\s*$', mt940_data))
 
-        echo "[$(date)] Email sent — $(wc -l < "${FAULTY_FILE}") faulty file(s) found." >&2
-    else
-        echo "[$(date)] Errors/warnings found in log but no RJT/KO control files matched." >&2
-    fi
+def remove_dash_only_lines(mt940_data: str) -> str:
+    return "\n".join(
+        line for line in mt940_data.splitlines()
+        if line.strip() != "-"
+    )
+# -------- Main --------
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print(f"Usage: {sys.argv[0]} <input.mt940> <output_folder>")
+        sys.exit(1)
 
-else
-    echo "[$(date)] No errors or warnings found." >&2
-fi
+    input_file = sys.argv[1]
+    output_dir = sys.argv[2]
 
-# --- Update lasttime file with current timestamp for next run ----------------
-echo "${DATE_DISPLAY}" >> "${LASTTIME_FILE}"
+    if not os.path.isfile(input_file):
+        print(f"Error: input file not found: {input_file}")
+        sys.exit(1)
 
-exit 0
+    if not os.path.isdir(output_dir):
+        print(f"Error: output folder not found: {output_dir}")
+        sys.exit(1)
+
+    mt940_data = read_text_file(input_file)
+    
+    if contains_dash_only_line(mt940_data):
+        mt940_data_no_minus = remove_dash_only_lines(mt940_data)
+        input_name = os.path.basename(input_file)
+        output_file = os.path.join(output_dir, f"{input_name}.minus_removed")
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write(mt940_data_no_minus)
+            print(f"Removed - from MT940 and written to: {output_file}")
+            sys.exit(0)
+        
+    reordered = reorder_mt940_blocks(mt940_data)
+
+    input_name = os.path.basename(input_file)
+    output_file = os.path.join(output_dir, f"{input_name}.reordered")
+
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(reordered)
+
+    print(f"Reordered MT940 written to: {output_file}")
