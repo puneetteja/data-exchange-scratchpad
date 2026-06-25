@@ -1,183 +1,94 @@
-import pandas as pd
-from pathlib import Path
-from datetime import datetime
-import xml.etree.ElementTree as ET
-import zipfile
-import getpass
-import shutil
+# ---------------- Step 5: Second Pass Matching (unmatched P2 → search all P1 & P8) ----------------
+#
+# For each P2 file that had no match in Step 4, we open it from the ZIP,
+# extract its OrgnlMsgId, then scan ALL files in pain1_dir and pain8_dir
+# (not restricted to today) looking for a file whose MsgId matches.
 
-# ---------------- Configuration ----------------
-                                                 
-imxuser = getpass.getuser()
-ebics_password = 'RD1IaKWVuo6qCBLm4N8k' if imxuser == 'imxuatr' else 'q84uhv1NrMvjra23pQHY'
+def build_p1p8_index(folders):
+    """
+    Build a dict:  MsgId -> {"P1P8_File": ..., "ReqdColltnDt": ...}
+    by scanning all valid files across the given folders.
+    This is done once so we don't re-read files for every unmatched P2.
+    """
+    index = {}
+    for folder in folders:
+        print(f"...indexing folder: {folder}")
+        for f in folder.glob("*"):
+            if not f.is_file() or f.name.startswith("_") or f.name.endswith(".Z"):
+                continue
+            msg_id = get_xml_value_from_file(f, "MsgId")
+            if msg_id and msg_id not in index:
+                reqd_colltn_dt = get_xml_value_from_file(f, "ReqdColltnDt") or "UNKNOWN"
+                index[msg_id] = {
+                    "P1P8_File": (
+                        f"{datetime.fromtimestamp(f.stat().st_mtime):%Y-%m-%d %H:%M:%S}"
+                        f"<br>{f.name}"
+                    ),
+                    "ReqdColltnDt": reqd_colltn_dt,
+                }
+    return index
 
-# ✅ Folders
-pain1_dir = Path(f"/{imxuser}/intra/imx/interfaces/imx2bank_ct/bak")
-pain8_dir = Path(f"/{imxuser}/intra/imx/interfaces/imx2bank2/bak")
-zip_dir   = Path(f"/appl/tools/EBICS/pain2/pain2_from_ebics_zip/")
-results_dir = Path(f"/appl/tools/EBICS/pain2/pain2_matching_results/")
-output_dir = Path(f"/appl/tools/WFS/apache-tomcat-9.0.109/webapps/ROOT/pain2report/")
-op_file = f"{output_dir}/indexplus.html"
+# Build the full index once (covers all dates, both folders)
+p1p8_full_index = build_p1p8_index([pain1_dir, pain8_dir])
 
-#======================================
-# Get latest P2 files from EBICS
-#======================================
-now = datetime.now()
-today_str = now.strftime("%Y%m%d")
-time_str = now.strftime("%H_%M")
-'''
-zip_path = f"{zip_dir}/p2_from_ebics_{today_str}_{time_str}.zip"
-
-result = subprocess.run([
-    "/appl/tools/WFS/java/bin/java",
-    "-jar",
-    "/appl/tools/EBICS/bltransfertool/bin/bltransfer.jar",
-    "--fetch",
-    "Intermarket Bank AG",
-    "REP:AT:SCT_pain.002_ZIP",
-    zip_path,
-    f"V{today_str[2:]}.B{today_str[2:]}",
-    "--password",
-    ebics_password
-    ],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE,
-    universal_newlines=True 
-)
-
-print(result.stdout)   # command output
-print(result.stderr)   # errors (if any)
-print(result.returncode)  # exit code
-'''
-#======================================
-# Process P2 files - match with P1 & P8
-#======================================
-
-today = datetime.now().date()
-
-# ---------------- XML Helpers ----------------
-def get_xml_value_from_string(xml_content, tag):
-    try:
-        root = ET.fromstring(xml_content)
-        for elem in root.iter():
-            if elem.tag.endswith(tag):
-                return elem.text
-    except Exception as e:
-        print(f"XML parse error: {e}")
-    return None
-
-def get_xml_value_from_file(file_path, tag):
-    try:
-        tree = ET.parse(file_path)
-        root = tree.getroot()
-        for elem in root.iter():
-            if elem.tag.endswith(tag):
-                return elem.text
-    except Exception as e:
-        print(f"Error reading {file_path}: {e}")
-    return None
-
-# ---------------- Step 1: Read P1 & P8 ----------------
-rows = []
-
-def process_folder(folder):
-    print(f'...processing folder: {folder}')
-                                            
-    for f in folder.glob("*"):
-        
-        if not f.is_file() or f.name.startswith("_") or f.name.endswith(".Z"):
-            continue
-            
-        file_date = datetime.fromtimestamp(f.stat().st_mtime).date()
-
-        if file_date != today:
-            continue
-
-        msg_id = get_xml_value_from_file(f, "MsgId")
-        reqd_colltn_dt = get_xml_value_from_file(f, "ReqdColltnDt") or "UNKNOWN"
-
-        if msg_id:
-            rows.append({
-                "P1P8_File": f"{datetime.fromtimestamp(f.stat().st_mtime):%Y-%m-%d %H:%M:%S}<br>{f.name}",
-                "P2_File": None,
-                "MsgId": msg_id,
-                "OrgnlMsgId": None,
-                "ReqdColltnDt": reqd_colltn_dt,
-                "GrpSts": None,
-                "Match_Type": None
-            })
-process_folder(pain1_dir)
-process_folder(pain8_dir)
-
-df_base = pd.DataFrame(rows)
-
-
-# ---------------- Step 2: Get latest ZIP ----------------
-zip_files = list(zip_dir.glob("*.zip"))
-
-if not zip_files:
-    print("No zip files found")
-    exit(1)
-
-latest_zip = max(zip_files, key=lambda f: f.stat().st_mtime)
-
-print(f"Using ZIP: {latest_zip}")
-
-
-# ---------------- Step 3: Process pain2 ----------------
-unmatched_pain2 = []
-all_p2_files_details = {}
-p2_files_list = []
+second_pass_rows = []
 
 with zipfile.ZipFile(latest_zip, "r") as z:
-    for p2_file_info in z.infolist():
+    # Build a lookup: display-string used in p2_files_list -> ZipInfo object
+    zip_info_by_display = {
+        (
+            f"{datetime(*info.date_time):%Y-%m-%d %H:%M:%S}"
+            f"<br>{Path(info.filename).name}"
+        ): info
+        for info in z.infolist()
+        if info.filename.lower().endswith(".xml")
+    }
 
-        if not p2_file_info.filename.lower().endswith(".xml"):
+    for p2_display in list_minus_df:
+        zip_info = zip_info_by_display.get(p2_display)
+        if zip_info is None:
+            print(f"WARNING: could not locate ZIP entry for '{p2_display}'")
             continue
-        
-        p2_files_list.append(f"{datetime(*p2_file_info.date_time):%Y-%m-%d %H:%M:%S}<br>{Path(p2_file_info.filename).name}")
-        
-        with z.open(p2_file_info) as file:
+
+        with z.open(zip_info) as file:
             xml_content = file.read().decode("utf-8", errors="ignore")
 
         org_msg_id = get_xml_value_from_string(xml_content, "OrgnlMsgId")
-        grp_sts = get_xml_value_from_string(xml_content, "GrpSts") or "UNKNOWN"
-        
-        if org_msg_id:
-            all_p2_files_details[org_msg_id] = {
-                "P2_File": f"{datetime(*p2_file_info.date_time):%Y-%m-%d %H:%M:%S}<br>{Path(p2_file_info.filename).name}",
-                "OrgnlMsgId": org_msg_id,
-                "GrpSts": grp_sts,
-                "P2_xml_content": xml_content,
-                "Match_Type": "Mapping_P1_P8_to_P2"
-            }
+        grp_sts    = get_xml_value_from_string(xml_content, "GrpSts") or "UNKNOWN"
 
-# ---------------- Step 4: Update df with matching P2 on msg_id = OrgnlMsgId----------------
-for idx, row in df_base.iterrows():
-    msg_id = row["MsgId"]
+        if not org_msg_id:
+            print(f"WARNING: no OrgnlMsgId found in '{p2_display}' — skipping")
+            continue
 
-    if msg_id in all_p2_files_details:
-        df_base.at[idx, "P2_File"] = all_p2_files_details[msg_id]["P2_File"]
-        df_base.at[idx, "OrgnlMsgId"] = all_p2_files_details[msg_id]["OrgnlMsgId"]
-        df_base.at[idx, "GrpSts"]     = all_p2_files_details[msg_id]["GrpSts"]
-        df_base.at[idx, "Match_Type"]     = all_p2_files_details[msg_id]["Match_Type"]
+        match = p1p8_full_index.get(org_msg_id)
 
-########### Cleanup later#############
-print('===========> df base + matched:')
+        if match:
+            second_pass_rows.append({
+                "P1P8_File":     match["P1P8_File"],
+                "P2_File":       p2_display,
+                "MsgId":         org_msg_id,
+                "OrgnlMsgId":    org_msg_id,
+                "ReqdColltnDt":  match["ReqdColltnDt"],
+                "GrpSts":        grp_sts,
+                "Match_Type":    "Mapping_P2_to_P1_P8",   # reverse-direction match
+            })
+            print(f"  [2nd pass] Matched P2 '{p2_display}' → P1/P8 MsgId '{org_msg_id}'")
+        else:
+            second_pass_rows.append({
+                "P1P8_File":     None,
+                "P2_File":       p2_display,
+                "MsgId":         None,
+                "OrgnlMsgId":    org_msg_id,
+                "ReqdColltnDt":  "UNKNOWN",
+                "GrpSts":        grp_sts,
+                "Match_Type":    "P2_Only_No_P1_P8_Found",
+            })
+            print(f"  [2nd pass] No P1/P8 match for OrgnlMsgId '{org_msg_id}' in '{p2_display}'")
+
+# Append second-pass results to the main DataFrame
+if second_pass_rows:
+    df_second = pd.DataFrame(second_pass_rows)
+    df_base   = pd.concat([df_base, df_second], ignore_index=True)
+
+print("===========> Final df (first pass + second pass):")
 print(df_base.to_string())
-
-print('===========> All p2_files_list in latest zip file:')
-for i, item in enumerate(p2_files_list, start=1):
-    print(f"{i}. P2_Filename: {item}")
-
-print('===========> Unmatched P2 files = complete list from zip minus those matched in df:')
-# Convert DataFrame column to a set (ignore None/NaN)
-p2_in_df = set(df_base["P2_File"].dropna())
-
-# Get values from list not present in df column
-list_minus_df = [f for f in p2_files_list if f not in p2_in_df]
-
-for i, item in enumerate(list_minus_df, start=1):
-    print(f"{i}. P2_Filename: {item}")
-
-# ---------------- Step 4: Second Pass Matching (Search in P1 & P8 files) ----------------
