@@ -1,94 +1,190 @@
-# ---------------- Step 5: Second Pass Matching (unmatched P2 → search all P1 & P8) ----------------
-#
-# For each P2 file that had no match in Step 4, we open it from the ZIP,
-# extract its OrgnlMsgId, then scan ALL files in pain1_dir and pain8_dir
-# (not restricted to today) looking for a file whose MsgId matches.
+import os
+from collections import defaultdict
+import re
+import sys
+from datetime import datetime
+import getpass
 
-def build_p1p8_index(folders):
+# ---------------- Configuration ----------------
+imxuser = getpass.getuser()
+INPUT_FOLDER = f"/{imxuser}/intra/imx/interfaces/swift2imx/control/"
+OUTPUT_FOLDER = f"/{imxuser}/intra/imx/interfaces/swift2imx/control/"
+LASTRUN_FOLDER = f"/appl/tools/mt940-scripts/mt940-files-correction-script"
+
+#------------------------------------------------
+# Exit if output folder does not exist
+
+folders = [INPUT_FOLDER, OUTPUT_FOLDER, LASTRUN_FOLDER]
+
+missing = [f for f in folders if not os.path.isdir(f)]
+
+if missing:
+    print("Error: Missing folders:")
+    for f in missing:
+        print(f" - {f}")
+    sys.exit(1)
+
+# -------------- Functions ----------------------
+def get_last_processed_time():
     """
-    Build a dict:  MsgId -> {"P1P8_File": ..., "ReqdColltnDt": ...}
-    by scanning all valid files across the given folders.
-    This is done once so we don't re-read files for every unmatched P2.
+    Reads the timestamp from file: mt940_lasttime_<YYYY_mm_dd>
     """
-    index = {}
-    for folder in folders:
-        print(f"...indexing folder: {folder}")
-        for f in folder.glob("*"):
-            if not f.is_file() or f.name.startswith("_") or f.name.endswith(".Z"):
-                continue
-            msg_id = get_xml_value_from_file(f, "MsgId")
-            if msg_id and msg_id not in index:
-                reqd_colltn_dt = get_xml_value_from_file(f, "ReqdColltnDt") or "UNKNOWN"
-                index[msg_id] = {
-                    "P1P8_File": (
-                        f"{datetime.fromtimestamp(f.stat().st_mtime):%Y-%m-%d %H:%M:%S}"
-                        f"<br>{f.name}"
-                    ),
-                    "ReqdColltnDt": reqd_colltn_dt,
-                }
-    return index
+    today_str = datetime.now().strftime("%Y_%m_%d")
+    filename = f"{LASTRUN_FOLDER}/mt940_lasttime_{today_str}"
+    
+    print(f'LASTRUN filename = {filename}')
 
-# Build the full index once (covers all dates, both folders)
-p1p8_full_index = build_p1p8_index([pain1_dir, pain8_dir])
+    if not os.path.exists(filename):
+        print(f'LASTRUN filename = {filename} NOT FOUND')
+        return None  # No restriction if file doesn't exist
 
-second_pass_rows = []
+    with open(filename, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+        value = lines[-1].strip() if lines else ""
+        print(f'Lastrun timestamp = {value}')
 
-with zipfile.ZipFile(latest_zip, "r") as z:
-    # Build a lookup: display-string used in p2_files_list -> ZipInfo object
-    zip_info_by_display = {
-        (
-            f"{datetime(*info.date_time):%Y-%m-%d %H:%M:%S}"
-            f"<br>{Path(info.filename).name}"
-        ): info
-        for info in z.infolist()
-        if info.filename.lower().endswith(".xml")
-    }
+    try:
+        return datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return None
 
-    for p2_display in list_minus_df:
-        zip_info = zip_info_by_display.get(p2_display)
-        if zip_info is None:
-            print(f"WARNING: could not locate ZIP entry for '{p2_display}'")
+
+def extract_tag_25(content):
+    """
+    Extracts the value of :25: tag from MT940 content.
+    """
+    for line in content.splitlines():
+        if line.startswith(":25:"):
+            return line.split(":25:")[1].strip()
+    return None
+
+
+def extract_tag_28C_prefix(content):
+    """
+    Extracts the value before '/' from :28C: tag.
+    Example: :28C:123/1 → returns '123'
+    """
+    for line in content.splitlines():
+        if line.startswith(":28C:"):
+            value = line.split(":28C:")[1].strip()
+            return value.split("/")[0]  # take part before '/'
+    return None
+
+def read_text_file_encoding_aware(path):
+    """
+    Read the file and return (content, encoding_used).
+    First attempts UTF-8 (with BOM stripping), then falls back to cp1252.
+    Prints the detected encoding to stdout.
+    """
+    try:
+        with open(path, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+        # Distinguish plain UTF-8 from UTF-8-with-BOM for accurate reporting
+        with open(path, "rb") as f:
+            raw_start = f.read(3)
+        encoding_used = "utf-8-sig (BOM detected)" if raw_start.startswith(b'\xef\xbb\xbf') else "utf-8"
+        # Normalise to plain utf-8 for the output open() call when no BOM present
+        output_encoding = "utf-8-sig" if raw_start.startswith(b'\xef\xbb\xbf') else "utf-8"
+    except UnicodeDecodeError:
+        with open(path, "r", encoding="cp1252") as f:
+            content = f.read()
+        encoding_used = "cp1252"
+        output_encoding = "cp1252"
+
+    print(f"Input file encoding: {encoding_used}")
+    return content, output_encoding
+
+def read_files_and_group_by_25(folder):
+    """
+    Reads all non-empty files and groups them by (:25:, :28C: prefix).
+    """
+    groups = defaultdict(list)
+    
+    last_time = get_last_processed_time()
+
+    for filename in os.listdir(folder):
+        filepath = os.path.join(folder, filename)
+        
+        # Skip if not a file
+        if not os.path.isfile(filepath):
             continue
 
-        with z.open(zip_info) as file:
-            xml_content = file.read().decode("utf-8", errors="ignore")
+        # Check file modification time
+        file_mtime = datetime.fromtimestamp(os.path.getmtime(filepath))
+        #print(f'filepath = {filepath}, file_mtime = {file_mtime}, last_time = {last_time}')
 
-        org_msg_id = get_xml_value_from_string(xml_content, "OrgnlMsgId")
-        grp_sts    = get_xml_value_from_string(xml_content, "GrpSts") or "UNKNOWN"
-
-        if not org_msg_id:
-            print(f"WARNING: no OrgnlMsgId found in '{p2_display}' — skipping")
+        # Skip empty files (size = 0 bytes)
+        if os.path.getsize(filepath) == 0:
             continue
 
-        match = p1p8_full_index.get(org_msg_id)
+        # Skip all OK files
+        if filename.upper().endswith(".OK"):
+            continue
+        
+        # Skip files starting with "_"
+        if filename.startswith("_"):
+            continue
 
-        if match:
-            second_pass_rows.append({
-                "P1P8_File":     match["P1P8_File"],
-                "P2_File":       p2_display,
-                "MsgId":         org_msg_id,
-                "OrgnlMsgId":    org_msg_id,
-                "ReqdColltnDt":  match["ReqdColltnDt"],
-                "GrpSts":        grp_sts,
-                "Match_Type":    "Mapping_P2_to_P1_P8",   # reverse-direction match
-            })
-            print(f"  [2nd pass] Matched P2 '{p2_display}' → P1/P8 MsgId '{org_msg_id}'")
-        else:
-            second_pass_rows.append({
-                "P1P8_File":     None,
-                "P2_File":       p2_display,
-                "MsgId":         None,
-                "OrgnlMsgId":    org_msg_id,
-                "ReqdColltnDt":  "UNKNOWN",
-                "GrpSts":        grp_sts,
-                "Match_Type":    "P2_Only_No_P1_P8_Found",
-            })
-            print(f"  [2nd pass] No P1/P8 match for OrgnlMsgId '{org_msg_id}' in '{p2_display}'")
+        # Skip old - already processed files
+        if last_time and file_mtime < last_time:
+            continue
 
-# Append second-pass results to the main DataFrame
-if second_pass_rows:
-    df_second = pd.DataFrame(second_pass_rows)
-    df_base   = pd.concat([df_base, df_second], ignore_index=True)
+        print(f'Processing file: {filepath}')
+        # Extracting tag 25 and 28c values from file
+        with open(filepath, "r", encoding="utf-8") as f:
+            content = f.read()
+        print(f'extracting tag 25 and 28c values from file = {filepath}')
+        tag_25 = extract_tag_25(content)
+        tag_28C_prefix = extract_tag_28C_prefix(content)
 
-print("===========> Final df (first pass + second pass):")
-print(df_base.to_string())
+        # Only group if both values exist
+        if tag_25 and tag_28C_prefix:
+            key = (tag_25, tag_28C_prefix)
+            groups[key].append((filename, content))
+
+    return groups
+
+
+def sanitize(value):
+    return re.sub(r'[^A-Za-z0-9_-]', '_', value)
+
+def merge_files(groups):
+    """
+    Merges files that share the same :25: AND :28C: prefix value.
+    """
+    for (tag_25, tag_28C), files in groups.items():
+        if len(files) > 1:
+            clean_tag = sanitize(tag_25)
+            output_filename = f"merged_{clean_tag}.txt"
+            output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+
+            merged_filenames = []
+
+            with open(output_path, "w", encoding="utf-8") as out_file:
+                for filename, content in files:
+                    out_file.write(content + "\n")
+                    merged_filenames.append(os.path.splitext(filename)[0])
+
+            print(f"Merged {len(files)} files for :25:={tag_25} → {output_filename}")
+
+            # Create a shorter combined filename
+            combined_name = "_".join(merged_filenames[:3])  # limit to first 3 names
+            if len(merged_filenames) > 3:
+                combined_name += "_etc"
+
+            new_filename = f"{combined_name}.merged.RJT"
+            new_path = os.path.join(OUTPUT_FOLDER, new_filename)
+
+            os.rename(output_path, new_path)
+
+            print(f"Renamed {output_filename} → {new_filename}")
+
+
+if __name__ == "__main__":
+    groups = read_files_and_group_by_25(INPUT_FOLDER)
+    if not groups:
+        print("No files to merge")
+    else:
+        merge_files(groups)
+        
+update the functions read_files_and_group_by_25 and merge_files to check for the encoding of the input and output files using the function read_text_file_encoding_aware
