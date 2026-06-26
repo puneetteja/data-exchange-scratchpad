@@ -97,6 +97,8 @@ def read_text_file_encoding_aware(path):
 def read_files_and_group_by_25(folder):
     """
     Reads all non-empty files and groups them by (:25:, :28C: prefix).
+    Each group entry stores (filename, content, output_encoding) so that
+    the correct encoding is available when writing the merged output file.
     """
     groups = defaultdict(list)
     
@@ -111,7 +113,6 @@ def read_files_and_group_by_25(folder):
 
         # Check file modification time
         file_mtime = datetime.fromtimestamp(os.path.getmtime(filepath))
-        #print(f'filepath = {filepath}, file_mtime = {file_mtime}, last_time = {last_time}')
 
         # Skip empty files (size = 0 bytes)
         if os.path.getsize(filepath) == 0:
@@ -130,17 +131,19 @@ def read_files_and_group_by_25(folder):
             continue
 
         print(f'Processing file: {filepath}')
-        # Extracting tag 25 and 28c values from file
-        with open(filepath, "r", encoding="utf-8") as f:
-            content = f.read()
-        print(f'extracting tag 25 and 28c values from file = {filepath}')
+
+        # Use encoding-aware reader instead of plain open()
+        content, output_encoding = read_text_file_encoding_aware(filepath)
+
+        print(f'Extracting tag 25 and 28C values from file = {filepath}')
         tag_25 = extract_tag_25(content)
         tag_28C_prefix = extract_tag_28C_prefix(content)
 
         # Only group if both values exist
         if tag_25 and tag_28C_prefix:
             key = (tag_25, tag_28C_prefix)
-            groups[key].append((filename, content))
+            # Store output_encoding alongside filename and content
+            groups[key].append((filename, content, output_encoding))
 
     return groups
 
@@ -151,6 +154,9 @@ def sanitize(value):
 def merge_files(groups):
     """
     Merges files that share the same :25: AND :28C: prefix value.
+    The output file is written using the encoding of the first file in the
+    group (all files in a group are expected to share the same encoding;
+    a warning is printed if a mismatch is detected).
     """
     for (tag_25, tag_28C), files in groups.items():
         if len(files) > 1:
@@ -160,8 +166,21 @@ def merge_files(groups):
 
             merged_filenames = []
 
-            with open(output_path, "w", encoding="utf-8") as out_file:
-                for filename, content in files:
+            # Use the encoding of the first file as the output encoding
+            _, _, output_encoding = files[0]
+            print(f"Output file encoding for merge of :25:={tag_25}: {output_encoding}")
+
+            # Warn if any file in the group has a different encoding
+            for filename, _, enc in files:
+                if enc != output_encoding:
+                    print(
+                        f"WARNING: encoding mismatch in group :25:={tag_25} — "
+                        f"'{filename}' has encoding '{enc}', expected '{output_encoding}'. "
+                        f"Writing output as '{output_encoding}'."
+                    )
+
+            with open(output_path, "w", encoding=output_encoding) as out_file:
+                for filename, content, _ in files:
                     out_file.write(content + "\n")
                     merged_filenames.append(os.path.splitext(filename)[0])
 
@@ -186,5 +205,3 @@ if __name__ == "__main__":
         print("No files to merge")
     else:
         merge_files(groups)
-        
-update the functions read_files_and_group_by_25 and merge_files to check for the encoding of the input and output files using the function read_text_file_encoding_aware
