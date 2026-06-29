@@ -1,30 +1,32 @@
 result_df = df[cond_imbweb & cond_no_scotty].copy()
 
-scotty_ticket_df = df["client tts ticket"].str.startswith("SCOTTY", na=False)
+# Fix: filter rows where "client tts ticket" starts with "SCOTTY"
+cond_scotty_ticket = df["client tts ticket"].str.startswith("SCOTTY", na=False)
+scotty_ticket_df = df[cond_scotty_ticket].copy()
+
+# Copy "client tts ticket" values into "Scotty Mapping" column
+scotty_ticket_df["Scotty Mapping"] = scotty_ticket_df["client tts ticket"]
 
 # ============================
 # Add SCOTTY ID column
 # ============================
-
 # ✅ SCOTTY lookup with Jira API 
 def check_scotty_mapping(row):
     webkey = row["IMBWEB_ID"]
-
     if pd.isna(webkey) or webkey == "nan":
         return ""
-
     scotty_key = get_scotty_ticket(webkey)
-
     if scotty_key:
         return scotty_key   # ✅ return SCOTTY-xxxx
     else:
         return "NOT FOUND"
 
 result_df["Scotty Mapping"] = result_df.apply(check_scotty_mapping, axis=1)
-
 result_df["Scotty Mapping"] = (
     result_df["Scotty Mapping"]
     .fillna("")
     .astype(str)
 )
 
+# Concatenate scotty_ticket_df rows into result_df
+result_df = pd.concat([result_df, scotty_ticket_df], ignore_index=True)
