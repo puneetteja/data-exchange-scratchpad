@@ -1,23 +1,10 @@
-For each row in the table with labels:
-	If row: label contains "PaymentRelease" then:
-		add comment to ticket "Patch deployed on UATR & <patch name - from table row>"
-	If row: label does not contain "PaymentRelease" then:
-		add comment to ticket "Synchronization patch <patch name - from table row> deployed on UATR"
+# ============================
+# STEP 5
+# ✅ Add comments to SCOTTY tickets via Jira API
+# ============================
 
-import pandas as pd
-import requests
-import urllib3
-from pathlib import Path
-import sys
-import webbrowser
-import re
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-jira_token = 'haha+hoho'
-
-def get_labels_for_scotty_ticket(issue_id):
-    url = "https://jira.s-mxs.net/rest/api/2/search"
+def add_comment_to_scotty_ticket(issue_id, comment_text):
+    url = f"https://jira.s-mxs.net/rest/api/2/issue/{issue_id}/comment"
 
     headers = {
         "Authorization": f"Bearer {jira_token}",
@@ -25,251 +12,32 @@ def get_labels_for_scotty_ticket(issue_id):
     }
 
     payload = {
-        "jql": f'project = 40451 AND issue = "{issue_id}"',
-        "fields": ["labels"]
+        "body": comment_text
     }
 
     response = requests.post(url, json=payload, headers=headers, verify=False)
 
-    if response.status_code != 200:
-        print(f"Jira query failed for {issue_id}: {response.text}")
-        return None
-
-    data = response.json()
-
-    issues = data.get("issues", [])
-    if not issues:
-        return []
-
-    return issues[0].get("fields", {}).get("labels", [])
-
-def get_scotty_ticket(webkey):
-    url = "https://jira.s-mxs.net/rest/api/2/search"
-
-    headers = {
-        "Authorization": f"Bearer {jira_token}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "jql": f'project = 40451 AND webkey ~ "{webkey}"',
-        "fields": ["key"]
-    }
-
-    response = requests.post(url, json=payload, headers=headers, verify=False)
-
-    if response.status_code != 200:
-        print(f"Jira query failed for {webkey}")
-        return None
-
-    data = response.json()
-
-    # ✅ Extract SCOTTY key
-    if data.get("issues"):
-        return data["issues"][0]["key"]
-
-    return None
-
-#######################################
-if len(sys.argv) < 2:
-    print("Usage: python script.py <file_path>")
-    sys.exit(1)
-
-file_path = sys.argv[1]
-
-#file_path = r"C:\Users\sl9ta\OneDrive - Erste Group\_Projects-Active-Puneet\AI-Agent-for-Test-Management\Example-Excel-and-Word-Files-from-Codix\IMB-PaymentRelease-MajRel4-UATR.xlsx"
-
-cols = [
-    "Patch name",
-    "Subject/Summary",
-    "tts key",
-    "client tts ticket",
-    "related ticket (internal)",
-    "related ticket (external)"
-]
-
-df = pd.read_excel(
-    file_path,
-    header=1,
-    usecols=cols,
-    engine="openpyxl"
-)
-
-# ✅ Remove rows where all selected columns are NaN
-df = df.dropna(how="all")
-
-# ✅ Ensure string type
-for col in cols:
-    df[col] = df[col].astype(str)
-
-print(f'Entries in this excel file ({Path(file_path).name}) are:')
-print(df)
-
-# ============================
-# STEP 1
-# Finding IMBDEV tickets for which there are no IMBWEB tickets
-# ============================
-
-filtered_df = df[
-    df["tts key"].str.startswith("IMBDEV", na=False) &
-    ~df["related ticket (internal)"].str.contains("IMBWEB", na=False) &
-    ~df["related ticket (external)"].str.contains("IMBWEB", na=False)
-]
-
-print('\nThe non-IMBWEB tickets are:')
-if len(filtered_df) != 0:
-    print(filtered_df)
-else:
-    print("No tickets found")
-
-html_content_non_imbweb_tickets = filtered_df.to_html(index=False)
-# ============================
-# STEP 2, 3
-# NO SCOTTY ticket
-# ============================
-
-# ✅ Extract IMBWEB ticket IDs from both columns
-imbweb_from_tts = df["tts key"].str.extract(r"(IMBWEB-\d+)", expand=False)
-imbweb_from_ext = df["related ticket (external)"].str.extract(r"(IMBWEB-\d+)", expand=False)
-imbweb_from_int = df["related ticket (internal)"].str.extract(r"(IMBWEB-\d+)", expand=False)
-
-# ✅ Combine into one column
-df["IMBWEB_ID"] = imbweb_from_tts.fillna(imbweb_from_ext).fillna(imbweb_from_int)
-
-# ✅ Condition: rows containing IMBWEB in the newly created column
-cond_imbweb = (
-    df["IMBWEB_ID"].str.contains("IMBWEB", na=False)
-)
-
-# ✅ Condition: NO SCOTTY ticket present
-cond_no_scotty = ~df["client tts ticket"].str.startswith("SCOTTY", na=False)
-
-# ✅ Apply both conditions
-result_df = df[cond_imbweb & cond_no_scotty].copy()
-
-# Filter rows where "client tts ticket" starts with "SCOTTY"
-cond_scotty_ticket = df["client tts ticket"].str.startswith("SCOTTY", na=False)
-scotty_ticket_df = df[cond_scotty_ticket].copy()
-
-# Copy "client tts ticket" values into "Scotty Mapping" column
-scotty_ticket_df["Scotty Mapping"] = scotty_ticket_df["client tts ticket"]
-
-#%%%%%%%%%%%%%%
-print('\nIMBWEB tickets without SCOTTY mapping:')
-if len(result_df) != 0:
-    print(result_df)
-else:
-    print("No tickets found")
-
-# ============================
-# Add SCOTTY ID column
-# ============================
-
-# ✅ SCOTTY lookup with Jira API 
-def check_scotty_mapping(row):
-    webkey = row["IMBWEB_ID"]
-
-    if pd.isna(webkey) or webkey == "nan":
-        return ""
-
-    scotty_key = get_scotty_ticket(webkey)
-
-    if scotty_key:
-        return scotty_key   # ✅ return SCOTTY-xxxx
+    if response.status_code == 201:
+        print(f"  ✅ Comment added to {issue_id}")
     else:
-        return "NOT FOUND"
+        print(f"  ❌ Failed to add comment to {issue_id}: {response.status_code} - {response.text}")
 
-result_df["Scotty Mapping"] = result_df.apply(check_scotty_mapping, axis=1)
+print("\nAdding comments to SCOTTY tickets...")
 
-result_df["Scotty Mapping"] = (
-    result_df["Scotty Mapping"]
-    .fillna("")
-    .astype(str)
-)
+for _, row in result_df.iterrows():
+    scotty_id = row.get("Scotty Mapping", "")
+    patch_name = row.get("Patch name", "")
+    labels = row.get("Labels", "")
 
-# Concatenate scotty_ticket_df rows into result_df
-result_df = pd.concat([result_df, scotty_ticket_df], ignore_index=True)
+    # Skip rows without a valid SCOTTY ticket
+    if not scotty_id or scotty_id in ("NOT FOUND", "nan", ""):
+        print(f"  ⚠️  Skipping row — no valid SCOTTY ticket (Patch: {patch_name})")
+        continue
 
-print('\nWith mapping status (based on API search in SCOTTY JIRA):')
-print(result_df[["Patch name", "Subject/Summary", "IMBWEB_ID", "client tts ticket", "Scotty Mapping"]])
+    if "PaymentRelease" in str(labels):
+        comment = f"Patch deployed on UATR & {patch_name}"
+    else:
+        comment = f"Synchronization patch {patch_name} deployed on UATR"
 
-# ============================
-# STEP 4
-# ✅ Add labels with Jira API lookup of Scotty ticket
-# ============================
-
-unique_ids = result_df["Scotty Mapping"][
-    result_df["Scotty Mapping"].notna() &
-    ~result_df["Scotty Mapping"].str.contains("NOT FOUND", na=False)
-].unique()
-
-label_map = {
-    issue_id: get_labels_for_scotty_ticket(issue_id)
-    for issue_id in unique_ids
-}
-
-result_df["Labels"] = result_df["Scotty Mapping"].map(
-    lambda x: ", ".join(label_map.get(x, [])) if pd.notna(x) else ""
-)
-
-pd.set_option("display.max_colwidth", None)
-
-print('\nWith labels (based on API search in SCOTTY JIRA):')
-print(result_df[["Patch name", "Subject/Summary", "IMBWEB_ID", "client tts ticket", "Scotty Mapping", "Labels"]].to_string())
-
-# ============================
-# Unique IMBWEB list
-# ============================
-
-imbweb_list = result_df.loc[
-    result_df["Scotty Mapping"] == "NOT FOUND", "IMBWEB_ID"
-].dropna().unique()
-
-print("\nUnique IMBWEB tickets without SCOTTY:")
-list_imbweb_list = list(imbweb_list)
-print(list_imbweb_list)
-
-# ============================
-# Save as HTML and open in browser
-# ============================
-
-for col in result_df.columns:
-    result_df[col] = result_df[col].map(
-        lambda x: re.sub(r"\s*\n\s*", "<br>", x) if isinstance(x, str) else x
-    )
-result_df["Labels"] = result_df["Labels"].astype(str)
-html_content_labels = result_df.to_html(index=False, escape=False)
-
-html_page = f"""
-<html>
-<head>
-<style>
-table {{
-    border-collapse: collapse;
-    width: 100%;
-}}
-th, td {{
-    border: 1px solid black;
-    padding: 8px;
-    text-align: left;
-}}
-th {{
-    background-color: #f2f2f2;
-}}
-</style>
-</head>
-<body>
-<br>The non-IMBWEB tickets are:<br>
-{html_content_non_imbweb_tickets}
-<br>Overall Status:<br>
-{html_content_labels}
-<br>Unique IMBWEB tickets without SCOTTY:<br>
-{list_imbweb_list}
-</body>
-</html>
-"""
-
-with open("result.html", "w", encoding="utf-8") as f:
-    f.write(html_page)
-
-webbrowser.open("result.html")
+    print(f"  → {scotty_id} | Labels: '{labels}' | Comment: '{comment}'")
+    add_comment_to_scotty_ticket(scotty_id, comment)
