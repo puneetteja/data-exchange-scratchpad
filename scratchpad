@@ -1,86 +1,89 @@
-Looking at your code, the most likely cause of duplicate rows is in **Step 1 + Step 4 combined**. Let me trace the issue:
+# Databricks notebook source
+# MAGIC %pip install langgraph langchain-openai --quiet
+# MAGIC dbutils.library.restartPython()
 
-**Root cause:** `df_base` is built from today's P1/P8 files. Then in Step 4, you update rows in-place where `MsgId` matches. But in the second pass, you're also adding rows for P2 files — including ones that *already matched* in Step 4, if the display string comparison has any mismatch.
+# COMMAND ----------
 
-The key suspect is here:
+# DBTITLE 1,Cell 2
 
-```python
-p2_in_df = set(df_base["P2_File"].dropna())
-list_minus_df = [f for f in p2_files_list if f not in p2_in_df]
-```
+from langgraph.prebuilt import create_react_agent
+from langchain_openai import ChatOpenAI
+from langchain_core.tools import tool
 
-The `P2_File` column in `df_base` is set from `all_p2_files_details[msg_id]["P2_File"]`, while `p2_files_list` is built separately in the same loop. If these strings differ even slightly (whitespace, path format), a P2 file gets treated as unmatched and added again in the second pass.
-
-**Fix — normalize the display strings at construction time:**
-
-```python
-def make_p2_display(zip_info):
-    """Single source of truth for P2 display strings."""
-    return (
-        f"{datetime(*zip_info.date_time):%Y-%m-%d %H:%M:%S}"
-        f"<br>{Path(zip_info.filename).name}"
-    )
-```
-
-Then replace both places where you build these strings:
-
-```python
-# In Step 3 — use the helper
-with zipfile.ZipFile(latest_zip, "r") as z:
-    for p2_file_info in z.infolist():
-        if not p2_file_info.filename.lower().endswith(".xml"):
-            continue
-
-        p2_display = make_p2_display(p2_file_info)      # ← normalized
-        p2_files_list.append(p2_display)
-
-        with z.open(p2_file_info) as file:
-            xml_content = file.read().decode("utf-8", errors="ignore")
-
-        org_msg_id = get_xml_value_from_string(xml_content, "OrgnlMsgId")
-        grp_sts = get_xml_value_from_string(xml_content, "GrpSts") or "UNKNOWN"
-        _, reason = get_reason_code_by_grpsts_xmlcontent(xml_content)
-
-        if org_msg_id:
-            all_p2_files_details[org_msg_id] = {
-                "P2_File": p2_display,              # ← same normalized string
-                ...
-            }
-```
-
-**Additionally, add a deduplication guard before writing output**, to catch any remaining duplicates:
-
-```python
-# After all concat operations, before Step 6
-df_base = df_base.drop_duplicates(
-    subset=["P1P8_File", "P2_File", "OrgnlMsgId"],
-    keep="first"
+llm = ChatOpenAI(
+    model="databricks-meta-llama-3-1-70b-instruct",
+    base_url=f"https://{spark.conf.get('spark.databricks.workspaceUrl')}/serving-endpoints",
+    api_key=dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiToken().get()
 )
-```
 
-**Also a secondary bug** — in `send_alert_email()`, `MAIL_TO` is a list but `mailx` expects a string:
+@tool
+def word_count(text: str) -> int:
+    """Count the number of words in a string."""
+    return len(text.split())
 
-```python
-# Bug
-MAIL_TO = ["Oliver.Proksch@intermarket.at, Yuesra.Mamas@intermarket.at"]
+@tool
+def reverse_text(text: str) -> str:
+    """Reverse a string."""
+    return text[::-1]
 
-# Fix
-MAIL_TO = "Oliver.Proksch@intermarket.at Yuesra.Mamas@intermarket.at"
-```
+@tool
+def get_random_weather() -> str:
+    """Return a random prediction from a list of weather options."""
+    import random
+    my_list = [
+    "Rainy",
+    "Cloudy",
+    "Clear",
+    "Sunny",
+    "Thunderstorm",
+    "Snow"
+    ]
+    return random.choice(my_list)
 
-And the `subprocess.run` call passes `MAIL_TO` as a single item but it should be unpacked:
 
-```python
-result = subprocess.run(
-    [
-        "mailx",
-        "-r", MAIL_FROM,
-        "-s", MAIL_SUBJECT,
-        "-c", MAIL_CC,
-        *MAIL_TO.split(),           # ← unpack recipients
-    ],
-    ...
-)
-```
+# COMMAND ----------
 
-The `make_p2_display()` helper ensuring a single source of truth for the display string is the most important fix for your duplicate rows issue.
+# DBTITLE 1,Cell 5
+print(word_count.invoke({'text': 'Today is a wonderful day'}))
+
+# COMMAND ----------
+
+# DBTITLE 1,Cell 4
+print(reverse_text.invoke({'text': 'Hello there'}))
+
+# COMMAND ----------
+
+# DBTITLE 1,Cell 3
+print(get_random_weather.invoke({}))
+
+# COMMAND ----------
+
+agent = create_react_agent(llm, tools=[word_count, reverse_text, get_random_weather])
+
+# COMMAND ----------
+
+result = agent.invoke({"messages": [{"role": "user", "content": "Count the number of words in '10 years of Erste Campus party today starts soon'."}]})
+print(result["messages"][-1].content)
+
+# COMMAND ----------
+
+result = agent.invoke({"messages": [{"role": "user", "content": "Reverse 'Erste Group' and then count its characters only if the weather is sunny, else multiply the number of characters by 10."}]})
+print(result["messages"][-1].content)
+
+# COMMAND ----------
+
+result = agent.invoke({"messages": [{"role": "user", "content": "Reverse 'Erste Group' and then count its characters only if the weather is sunny, else multiply the number of characters by 10."}]})
+print(result["messages"][-1].content)
+
+# COMMAND ----------
+
+# DBTITLE 1,Cell 10
+for i, msg in enumerate(result["messages"]):
+    role = msg.__class__.__name__.replace("Message", "")
+    print(f"[{i}] {role}")
+    if hasattr(msg, "tool_calls") and msg.tool_calls:
+        for tc in msg.tool_calls:
+            print(f"  Tool call : {tc['name']}({tc['args']})")
+    if msg.content:
+        print(f"  Content   : {msg.content}")
+    print()
