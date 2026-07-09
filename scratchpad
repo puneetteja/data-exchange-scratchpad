@@ -1,89 +1,68 @@
-# Databricks notebook source
+Good, but the small teal underline reads like an accent stripe. Let me check remaining slides first, then fix issues.Good. Continuing to check remaining slides.Text has extra vertical whitespace in cards but is fine overall. Let's continue.Now let's check the remaining slides before rebuilding.That looks great, but the loop-back dashed line spans full width which reads like a stripe/border. It's positioned as a discrete arrow with caption though, and it's not touching an edge, so it's fine as a diagram element. Let's check remaining slides.Good. Continuing.This is excellent. Let's check the last two.All slides look strong except slide 4's clipped boxes. Let me rebuild with the fix and re-validate that slide.All slides now look clean and well-designed. Let's do the content QA check and then present the file.The deck is ready — 10 slides with speaker notes calibrated for a ~10-minute talk (title, agenda, definition, architecture, the agent loop, why it matters, current deployment use cases, autonomy spectrum, future trends, and key takeaways).
+
+---
+
+## Code Walkthrough: LangGraph Agent on Databricks
+
+Here's what this notebook does, cell by cell:
+
+**Cell 1 — Setup**
+```python
 # MAGIC %pip install langgraph langchain-openai --quiet
 # MAGIC dbutils.library.restartPython()
+```
+Installs `langgraph` (the agent orchestration framework) and `langchain-openai` (an OpenAI-compatible client wrapper). The `restartPython()` call is required in Databricks after a `%pip install` so the notebook's Python kernel picks up the newly installed packages.
 
-# COMMAND ----------
-
-# DBTITLE 1,Cell 2
-
-from langgraph.prebuilt import create_react_agent
-from langchain_openai import ChatOpenAI
-from langchain_core.tools import tool
-
+**Cell 2 — Model and tool definitions**
+```python
 llm = ChatOpenAI(
     model="databricks-meta-llama-3-1-70b-instruct",
     base_url=f"https://{spark.conf.get('spark.databricks.workspaceUrl')}/serving-endpoints",
     api_key=dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiToken().get()
 )
+```
+This is the clever part: `ChatOpenAI` is built for OpenAI's API, but Databricks Model Serving exposes an **OpenAI-compatible endpoint**, so pointing `base_url` at the workspace's `/serving-endpoints` path lets you call a hosted Llama 3.1 70B model through the OpenAI client interface. The `api_key` isn't an OpenAI key at all — it's the current notebook's Databricks auth token, fetched programmatically so no secret has to be hardcoded.
 
-@tool
-def word_count(text: str) -> int:
-    """Count the number of words in a string."""
-    return len(text.split())
+The `@tool` decorator turns plain Python functions into structures the agent can call: each gets a name, the docstring becomes the description the model uses to decide *when* to call it, and the type hints define its expected input/output schema. Three tools are defined: `word_count`, `reverse_text`, and `get_random_weather` (which injects real randomness/non-determinism into the agent's reasoning — useful for demonstrating conditional logic).
 
-@tool
-def reverse_text(text: str) -> str:
-    """Reverse a string."""
-    return text[::-1]
-
-@tool
-def get_random_weather() -> str:
-    """Return a random prediction from a list of weather options."""
-    import random
-    my_list = [
-    "Rainy",
-    "Cloudy",
-    "Clear",
-    "Sunny",
-    "Thunderstorm",
-    "Snow"
-    ]
-    return random.choice(my_list)
-
-
-# COMMAND ----------
-
-# DBTITLE 1,Cell 5
+**Cells "5", "4", "3" — Direct tool tests**
+```python
 print(word_count.invoke({'text': 'Today is a wonderful day'}))
-
-# COMMAND ----------
-
-# DBTITLE 1,Cell 4
 print(reverse_text.invoke({'text': 'Hello there'}))
-
-# COMMAND ----------
-
-# DBTITLE 1,Cell 3
 print(get_random_weather.invoke({}))
+```
+These call the tools directly via `.invoke()`, bypassing the LLM entirely — a sanity check that the tools work in isolation before handing them to an agent. (Note the cell titles are out of numeric order — "Cell 5" appears before "Cell 4" and "Cell 3" — purely cosmetic, doesn't affect execution, but worth tidying for readability.)
 
-# COMMAND ----------
-
+**Creating the agent**
+```python
 agent = create_react_agent(llm, tools=[word_count, reverse_text, get_random_weather])
+```
+`create_react_agent` builds a ReAct-style agent (Reason + Act) — this is a prebuilt LangGraph graph that implements exactly the perceive→plan→act→observe loop from the presentation: the model reads the message, decides whether to call a tool, executes it, reads the result, and repeats until it produces a final answer.
 
-# COMMAND ----------
-
-result = agent.invoke({"messages": [{"role": "user", "content": "Count the number of words in '10 years of Erste Campus party today starts soon'."}]})
+**Running the agent**
+```python
+result = agent.invoke({"messages": [{"role": "user", "content": "Count the number of words..."}]})
 print(result["messages"][-1].content)
+```
+Straightforward — one word-count request, single tool call expected.
 
-# COMMAND ----------
+The second query is the interesting one:
+```python
+"Reverse 'Erste Group' and then count its characters only if the weather is sunny, else multiply the number of characters by 10."
+```
+This forces multi-step conditional reasoning: reverse the text → check weather (calls `get_random_weather`, which is random) → branch on that result → either count characters or multiply by 10. It's run **twice** in a row — since `get_random_weather` is non-deterministic, the two runs can legitimately produce different reasoning paths and different final answers. That's likely intentional, to demonstrate that agent runs aren't reproducible when a tool has randomness in it — but note there's no `reverse_text` character-*counting* tool exposed; the agent has to fall back on counting characters itself via reasoning, which for an LLM is a weak spot (models are not reliable at precise character counting). That's a real risk worth flagging: the result may look confident but be numerically wrong.
 
-result = agent.invoke({"messages": [{"role": "user", "content": "Reverse 'Erste Group' and then count its characters only if the weather is sunny, else multiply the number of characters by 10."}]})
-print(result["messages"][-1].content)
-
-# COMMAND ----------
-
-result = agent.invoke({"messages": [{"role": "user", "content": "Reverse 'Erste Group' and then count its characters only if the weather is sunny, else multiply the number of characters by 10."}]})
-print(result["messages"][-1].content)
-
-# COMMAND ----------
-
-# DBTITLE 1,Cell 10
+**Cell "10" — Inspecting the full trace**
+```python
 for i, msg in enumerate(result["messages"]):
     role = msg.__class__.__name__.replace("Message", "")
-    print(f"[{i}] {role}")
+    ...
     if hasattr(msg, "tool_calls") and msg.tool_calls:
         for tc in msg.tool_calls:
             print(f"  Tool call : {tc['name']}({tc['args']})")
     if msg.content:
         print(f"  Content   : {msg.content}")
-    print()
+```
+This walks the entire message history the agent produced — human message, AI messages (with intermediate tool calls), tool result messages, and the final AI response — printing each message's type, any tool calls it made with their arguments, and its content. This is the debugging/observability view: it's how you'd verify *which* tools got called, in what order, and with what arguments, rather than just trusting the final printed answer. This kind of introspection is exactly the "observability" trend mentioned on the Future Trends slide — as agents take on more consequential tasks, being able to audit the full reasoning trace (not just the final output) becomes essential.
+
+**One thing worth double-checking**: since `result` only holds the *last* `agent.invoke()` call (the second identical query), the trace in Cell 10 reflects that second run only — the first run's trace isn't inspected, so if the two runs diverged (due to the random weather tool), you'd only see one side of that story.
