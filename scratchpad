@@ -1,4 +1,3 @@
-# P2 new reason logic
 import pandas as pd
 from pathlib import Path
 from datetime import datetime, timedelta, date
@@ -352,6 +351,14 @@ for idx, row in df_base.iterrows():
         df_base.at[idx, "P2_File"] = all_p2_files_details[msg_id]["P2_File"]
         df_base.at[idx, "OrgnlMsgId"] = all_p2_files_details[msg_id]["OrgnlMsgId"]
         df_base.at[idx, "GrpSts"] = all_p2_files_details[msg_id]["GrpSts"]
+        # FIX: "reason" was computed and stored in all_p2_files_details back in
+        # Step 3, but this loop never copied it into df_base — every first-pass
+        # match kept the "reason": None it was initialized with in process_folder.
+        # Only second-pass matches (Step 4b) got a reason, since that loop sets
+        # it explicitly when building second_pass_rows. This is why the same
+        # StsRsnInf content could show up correctly for one message and as None
+        # for another, depending purely on which matching pass caught it.
+        df_base.at[idx, "reason"] = all_p2_files_details[msg_id]["reason"]
         df_base.at[idx, "Match_Type"] = all_p2_files_details[msg_id]["Match_Type"]
 
 print("===========> df base + matched:")
