@@ -1,68 +1,226 @@
-Good, but the small teal underline reads like an accent stripe. Let me check remaining slides first, then fix issues.Good. Continuing to check remaining slides.Text has extra vertical whitespace in cards but is fine overall. Let's continue.Now let's check the remaining slides before rebuilding.That looks great, but the loop-back dashed line spans full width which reads like a stripe/border. It's positioned as a discrete arrow with caption though, and it's not touching an edge, so it's fine as a diagram element. Let's check remaining slides.Good. Continuing.This is excellent. Let's check the last two.All slides look strong except slide 4's clipped boxes. Let me rebuild with the fix and re-validate that slide.All slides now look clean and well-designed. Let's do the content QA check and then present the file.The deck is ready — 10 slides with speaker notes calibrated for a ~10-minute talk (title, agenda, definition, architecture, the agent loop, why it matters, current deployment use cases, autonomy spectrum, future trends, and key takeaways).
+import pandas as pd
+from pathlib import Path
+from datetime import datetime
+import xml.etree.ElementTree as ET
+import zipfile
+import smtplib
+from email.message import EmailMessage
+import subprocess
+import getpass
+import shutil
 
----
+imxuser = getpass.getuser()
+ebics_password = 'RD1IaKWVuo6qCBLm4N8k' if imxuser == 'imxuatr' else 'q84uhv1NrMvjra23pQHY'
 
-## Code Walkthrough: LangGraph Agent on Databricks
+# ✅ Folders
+pain1_dir = Path(f"/{imxuser}/intra/imx/interfaces/imx2bank_ct/bak")
+pain8_dir = Path(f"/{imxuser}/intra/imx/interfaces/imx2bank2/bak")
+zip_dir   = Path(f"/appl/tools/EBICS/pain2/pain2_from_ebics_zip/")
+results_dir = Path(f"/appl/tools/EBICS/pain2/pain2_matching_results/")
+output_dir = Path(f"/appl/tools/WFS/apache-tomcat-9.0.109/webapps/ROOT/pain2report/")
+op_file = f"{output_dir}/index.html"
 
-Here's what this notebook does, cell by cell:
+#======================================
+# Get latest P2 files from EBICS
+#======================================
+now = datetime.now()
+today_str = now.strftime("%Y%m%d")
+time_str = now.strftime("%H_%M")
 
-**Cell 1 — Setup**
-```python
-# MAGIC %pip install langgraph langchain-openai --quiet
-# MAGIC dbutils.library.restartPython()
-```
-Installs `langgraph` (the agent orchestration framework) and `langchain-openai` (an OpenAI-compatible client wrapper). The `restartPython()` call is required in Databricks after a `%pip install` so the notebook's Python kernel picks up the newly installed packages.
+zip_path = f"{zip_dir}/p2_from_ebics_{today_str}_{time_str}.zip"
 
-**Cell 2 — Model and tool definitions**
-```python
-llm = ChatOpenAI(
-    model="databricks-meta-llama-3-1-70b-instruct",
-    base_url=f"https://{spark.conf.get('spark.databricks.workspaceUrl')}/serving-endpoints",
-    api_key=dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiToken().get()
+result = subprocess.run([
+    "/appl/tools/WFS/java/bin/java",
+    "-jar",
+    "/appl/tools/EBICS/bltransfertool/bin/bltransfer.jar",
+    "--fetch",
+    "Intermarket Bank AG",
+    "REP:AT:SCT_pain.002_ZIP",
+    zip_path,
+    f"V{today_str[2:]}.B{today_str[2:]}",
+    "--password",
+    ebics_password
+    ],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+    universal_newlines=True 
 )
-```
-This is the clever part: `ChatOpenAI` is built for OpenAI's API, but Databricks Model Serving exposes an **OpenAI-compatible endpoint**, so pointing `base_url` at the workspace's `/serving-endpoints` path lets you call a hosted Llama 3.1 70B model through the OpenAI client interface. The `api_key` isn't an OpenAI key at all — it's the current notebook's Databricks auth token, fetched programmatically so no secret has to be hardcoded.
 
-The `@tool` decorator turns plain Python functions into structures the agent can call: each gets a name, the docstring becomes the description the model uses to decide *when* to call it, and the type hints define its expected input/output schema. Three tools are defined: `word_count`, `reverse_text`, and `get_random_weather` (which injects real randomness/non-determinism into the agent's reasoning — useful for demonstrating conditional logic).
+print(result.stdout)   # command output
+print(result.stderr)   # errors (if any)
+print(result.returncode)  # exit code
 
-**Cells "5", "4", "3" — Direct tool tests**
-```python
-print(word_count.invoke({'text': 'Today is a wonderful day'}))
-print(reverse_text.invoke({'text': 'Hello there'}))
-print(get_random_weather.invoke({}))
-```
-These call the tools directly via `.invoke()`, bypassing the LLM entirely — a sanity check that the tools work in isolation before handing them to an agent. (Note the cell titles are out of numeric order — "Cell 5" appears before "Cell 4" and "Cell 3" — purely cosmetic, doesn't affect execution, but worth tidying for readability.)
+#======================================
+# Process P2 files - match with P1 & P8
+#======================================
 
-**Creating the agent**
-```python
-agent = create_react_agent(llm, tools=[word_count, reverse_text, get_random_weather])
-```
-`create_react_agent` builds a ReAct-style agent (Reason + Act) — this is a prebuilt LangGraph graph that implements exactly the perceive→plan→act→observe loop from the presentation: the model reads the message, decides whether to call a tool, executes it, reads the result, and repeats until it produces a final answer.
+today = datetime.now().date()
 
-**Running the agent**
-```python
-result = agent.invoke({"messages": [{"role": "user", "content": "Count the number of words..."}]})
-print(result["messages"][-1].content)
-```
-Straightforward — one word-count request, single tool call expected.
+# ✅ XML helper (handles namespaces)
+def get_xml_value_from_string(xml_content, tag):
+    try:
+        root = ET.fromstring(xml_content)
+        for elem in root.iter():
+            if elem.tag.endswith(tag):
+                return elem.text
+    except Exception as e:
+        print(f"XML parse error: {e}")
+    return None
 
-The second query is the interesting one:
-```python
-"Reverse 'Erste Group' and then count its characters only if the weather is sunny, else multiply the number of characters by 10."
-```
-This forces multi-step conditional reasoning: reverse the text → check weather (calls `get_random_weather`, which is random) → branch on that result → either count characters or multiply by 10. It's run **twice** in a row — since `get_random_weather` is non-deterministic, the two runs can legitimately produce different reasoning paths and different final answers. That's likely intentional, to demonstrate that agent runs aren't reproducible when a tool has randomness in it — but note there's no `reverse_text` character-*counting* tool exposed; the agent has to fall back on counting characters itself via reasoning, which for an LLM is a weak spot (models are not reliable at precise character counting). That's a real risk worth flagging: the result may look confident but be numerically wrong.
 
-**Cell "10" — Inspecting the full trace**
-```python
-for i, msg in enumerate(result["messages"]):
-    role = msg.__class__.__name__.replace("Message", "")
-    ...
-    if hasattr(msg, "tool_calls") and msg.tool_calls:
-        for tc in msg.tool_calls:
-            print(f"  Tool call : {tc['name']}({tc['args']})")
-    if msg.content:
-        print(f"  Content   : {msg.content}")
-```
-This walks the entire message history the agent produced — human message, AI messages (with intermediate tool calls), tool result messages, and the final AI response — printing each message's type, any tool calls it made with their arguments, and its content. This is the debugging/observability view: it's how you'd verify *which* tools got called, in what order, and with what arguments, rather than just trusting the final printed answer. This kind of introspection is exactly the "observability" trend mentioned on the Future Trends slide — as agents take on more consequential tasks, being able to audit the full reasoning trace (not just the final output) becomes essential.
+def get_xml_value_from_file(file_path, tag):
+    try:
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+        for elem in root.iter():
+            if elem.tag.endswith(tag):
+                return elem.text
+    except Exception as e:
+        print(f"Error reading {file_path}: {e}")
+    return None
 
-**One thing worth double-checking**: since `result` only holds the *last* `agent.invoke()` call (the second identical query), the trace in Cell 10 reflects that second run only — the first run's trace isn't inspected, so if the two runs diverged (due to the random weather tool), you'd only see one side of that story.
+
+# ✅ Step 1 + 2 → collect input files
+rows = []
+
+def process_folder(folder):
+    print(f'...processing folder: {folder}')
+    for f in folder.glob("*"):
+        #print(f'...processing file: {f}')
+        if f.name.startswith("_") or f.name.endswith(".Z"):
+            continue
+
+        file_date = datetime.fromtimestamp(f.stat().st_mtime).date()
+
+        if file_date != today:
+            continue
+
+        msg_id = get_xml_value_from_file(f, "MsgId")
+        reqd_colltn_dt = get_xml_value_from_file(f, "ReqdColltnDt") or "UNKNOWN"
+
+        rows.append({
+            "Source_File": f"{datetime.fromtimestamp(f.stat().st_mtime):%Y-%m-%d %H:%M:%S}<br>{f.name}",
+            "MsgId": msg_id,
+            "Pain2_File": None,
+            "OrgnlMsgId": None,
+            "ReqdColltnDt": reqd_colltn_dt,
+            "GrpSts": None
+        })
+
+process_folder(pain1_dir)
+process_folder(pain8_dir)
+
+df = pd.DataFrame(rows)
+
+print('df w P1 & P8 filenames and MsgIds:')
+print(df)
+
+# ✅ Step 3 → find latest ZIP
+zip_files = list(zip_dir.glob("*.zip"))
+latest_zip = max(zip_files, key=lambda f: f.stat().st_mtime)
+
+print(f"Using ZIP: {latest_zip}")
+
+# ✅ Step 4 → read ZIP WITHOUT extracting
+pain2_map = {}
+
+with zipfile.ZipFile(latest_zip, "r") as z:
+    for file_info in z.infolist():
+
+        # skip unwanted
+        if file_info.filename.startswith("_") or file_info.filename.endswith(".Z"):
+            continue
+        
+        if not file_info.filename.lower().endswith(".xml"):
+            continue
+
+        with z.open(file_info) as f:
+            content = f.read()
+
+            org_msg_id = get_xml_value_from_string(content, "OrgnlMsgId")
+            grp_sts    = get_xml_value_from_string(content, "GrpSts") or "UNKNOWN"
+
+            if org_msg_id:
+                pain2_map[org_msg_id] = {
+                    "file": f"{datetime(*file_info.date_time):%Y-%m-%d %H:%M:%S}<br>{Path(file_info.filename).name}",
+                    "org_msg_id": org_msg_id,
+                    "grp_sts": grp_sts,
+                }
+
+# ✅ Match MsgId ↔ OrgnlMsgId
+for idx, row in df.iterrows():
+    msg_id = row["MsgId"]
+
+    if msg_id in pain2_map:
+        print('Found MsgId in pain2map...')
+        df.at[idx, "Pain2_File"] = pain2_map[msg_id]["file"]
+        df.at[idx, "OrgnlMsgId"] = pain2_map[msg_id]["org_msg_id"]
+        df.at[idx, "GrpSts"]     = pain2_map[msg_id]["grp_sts"]
+
+# ✅ Step 5 & 6 → print & save HTML file
+html_file = f"{results_dir}/p2__p1_8_matching_report_{today_str}_{time_str}.html"
+
+if not df.empty:
+    df.drop(columns=["MsgId"], inplace=True, errors="ignore")
+    df = df.sort_values(by="GrpSts")
+    print(df.to_string(index=False))
+    
+    # Create timestamp
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Add header
+    header = f"<h2>Report generated at: {timestamp}</h2>"
+
+    # Combine header + table
+    html_content = header + df.to_html(index=False, escape=False, border=1)
+else:    
+    print("DataFrame is empty — writing message to HTML file.")
+    html_content = f"""
+<html>
+<body>
+    <h2 style="color:red;">No data available</h2>
+    <p>The DataFrame is empty. No matching records were found.</p>
+    <p>Timestamp: {today_str} {time_str}</p>
+</body>
+</html>
+    """
+
+
+# ✅ Write HTML
+with open(html_file, "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print(f"Saved HTML: {html_file}")
+    
+shutil.copy2(html_file, op_file)
+
+# ✅ Step 6 → send email
+def send_email_with_attachment(file_path):
+
+    sender = "your_email@company.com"
+    receiver = "haha@abc.com"
+
+    msg = EmailMessage()
+    msg["Subject"] = "Pain XML Matching Report"
+    msg["From"] = sender
+    msg["To"] = receiver
+
+    msg.set_content("Please find the attached report.")
+
+    # attach file
+    with open(file_path, "rb") as f:
+        msg.add_attachment(
+            f.read(),
+            maintype="text",
+            subtype="html",
+            filename=file_path
+        )
+
+    # SMTP config (example)
+    with smtplib.SMTP("smtp.yourcompany.com", 25) as server:
+        server.send_message(msg)
+
+    print("Email sent successfully")
+
+# ✅ Call email function
+#send_email_with_attachment(html_file)
