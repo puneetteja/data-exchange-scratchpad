@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">
+  <CstmrCdtTrfInitn>
+    <GrpHdr>
+      <MsgId>SDD-ID-20260804-0000000000000036369</MsgId>
+      <CreDtTm>2026-08-04T16:15:25</CreDtTm>
+      <NbOfTxs>1</NbOfTxs>
+      <InitgPty>
+        <Nm>INTERMARKET BANK AG</Nm>
+      </InitgPty>
+      <FwdgAgt>
+        <FinInstnId>
+          <BICFI>GIBAATWGXXX</BICFI>
+        </FinInstnId>
+      </FwdgAgt>
+    </GrpHdr>
+    <PmtInf>
+      <PmtInfId>LOT-ID-20260804-0000000000000040773</PmtInfId>
+      <PmtMtd>TRF</PmtMtd>
+      <PmtTpInf>
+        <SvcLvl>
+          <Cd>SEPA</Cd>
+        </SvcLvl>
+        <LclInstrm>
+          <Cd>INST</Cd>
+        </LclInstrm>
+      </PmtTpInf>
+      <ReqdExctnDt>
+        <Dt>2026-08-04</Dt>
+      </ReqdExctnDt>
+      <Dbtr>
+        <Nm>PIPELIFE AUSTRIA GMBH . CO KG</Nm>
+        <PstlAdr>
+          <TwnNm>WIEN</TwnNm>
+          <Ctry>AT</Ctry>
+        </PstlAdr>
+      </Dbtr>
+      <DbtrAcct>
+        <Id>
+          <IBAN>AT452011180174128900</IBAN>
+        </Id>
+      </DbtrAcct>
+      <DbtrAgt>
+        <FinInstnId>
+          <BICFI>GIBAATW0XXX</BICFI>
+        </FinInstnId>
+      </DbtrAgt>
+      <ChrgBr>SLEV</ChrgBr>
+      <CdtTrfTxInf>
+        <PmtId>
+          <EndToEndId>IMX-PMT-ID--00A80KTQ3C001</EndToEndId>
+        </PmtId>
+        <Amt>
+          <InstdAmt Ccy="EUR">4800.00</InstdAmt>
+        </Amt>
+        <ChrgBr>SLEV</ChrgBr>
+        <CdtrAgt>
+          <FinInstnId>
+            <BICFI>GIBAATWWXXX</BICFI>
+          </FinInstnId>
+        </CdtrAgt>
+        <Cdtr>
+          <Nm>INTERMARKET BANK AG</Nm>
+          <PstlAdr>
+            <TwnNm>WIEN</TwnNm>
+            <Ctry>AT</Ctry>
+          </PstlAdr>
+        </Cdtr>
+        <CdtrAcct>
+          <Id>
+            <IBAN>AT612011180174129000</IBAN>
+          </Id>
+        </CdtrAcct>
+        <RmtInf>
+          <Ustrd>RUCKFUHRUNG AT02841</Ustrd>
+        </RmtInf>
+      </CdtTrfTxInf>
+    </PmtInf>
+  </CstmrCdtTrfInitn>
+</Document>
