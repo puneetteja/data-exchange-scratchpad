@@ -1,65 +1,70 @@
-#!/bin/bash 
+#!/bin/bash
+#
+# Checks the latest *err.log for an iMX interface and reports status
+# via CEMOS and (on non-CLEAR) email.
+#
+set -uo pipefail   # NOT -e: grep returning "no match" (exit 1) is expected here
 
-[[ $# -ne 1 ]] && echo "Call should contain interface identifier: example ->  $0 imx2kdb" && exit 1;
+[[ $# -ne 1 ]] && { echo "Call should contain interface identifier: example -> $0 imx2kdb"; exit 1; }
 
 imxusr="imxuatr"
-WDIR=/${imxusr}/intra/imx/interfaces/$1/log
-cd ${WDIR}
+IFACE="$1"
+WDIR="/${imxusr}/intra/imx/interfaces/${IFACE}/log"
 
-IFACE=`pwd | awk -F/ '{print $6}'`
+cd "${WDIR}" || { echo "ERROR: cannot cd to ${WDIR}" >&2; exit 1; }
+
 ENVIRO="UAT R"
 RED_CODE="C1356"
 CIID=4668036
-CEMOS_URL=https://eventmgmt.rest.fat.erste-group.net:443/shared
-CKIF="iMX: $ENVIRO - interface: ${IFACE}"
+CEMOS_URL="https://eventmgmt.rest.fat.erste-group.net:443/shared"
+CKIF="iMX: ${ENVIRO} - interface: ${IFACE}"
 STYPE="Stateless"
 imxfrom="imxuat"
 
+# TODO: move this out of the script body — e.g.
+#   AUTH_TOKEN="$(cat ~/.imx_cemos_token)"   # file with chmod 600
+AUTH_TOKEN="YzEzNTYuZXZlbnRtZ210LnJlc3Q6P3pfUiNPaFRiWGZAfXFNKVViWi5rcistVXRNJVtpVVYoMzdYQ1c/dElEYTldZylvOn09bEFmdEkmYT9TeS05UGQuMXVrcGVsR30wUTc4PUdRX31PbFBITy4/RERecXtwcjFVbg=="
 
-LASTERR=`ls -tr *err.log 2>/dev/null|tail -n1`
-LISTERR=`ls -l *err.log 2>/dev/null |wc -l`
+LASTERR=$(ls -tr -- *err.log 2>/dev/null | tail -n1)
+LISTERR=$(ls -1 -- *err.log 2>/dev/null | wc -l)
 
-mailmail()
-{
-if [ ${RC} != "CLEAR" ]
-then
-echo "${text}" | mailx -r ${imxfrom}@erstegroup.com -s "Please check ${CKIF} at $HOSTNAME" -c puneet.teja@erstegroup.com GMOPiMX@erstegroup.com
-else
-echo "OK" >/dev/null
-fi
+mailmail() {
+    if [[ "${RC}" != "CLEAR" ]]; then
+        echo "${text}" | mailx -r "${imxfrom}@erstegroup.com" \
+            -s "Please check ${CKIF} at ${HOSTNAME}" \
+            -c puneet.teja@erstegroup.com GMOPiMX@erstegroup.com
+    fi
 }
 
-#echo ${WCERR}
+if [[ "${LISTERR}" -eq 0 ]]; then
+    RC="CLEAR"
+    text="${CKIF} - No Error in log file found"
+else
+    # Read the log once, count each severity in a single pass
+    read -r WCFAT WCERR WCWARN < <(
+        grep -oP '\[(FATAL|ERROR|WARN)\]' "${LASTERR}" | sort | uniq -c | \
+        awk '{c[$2]=$1} END{print c["[FATAL]"]+0, c["[ERROR]"]+0, c["[WARN]"]+0}'
+    )
 
-if [[ ${LISTERR} -eq 0 ]] 
-then
-RC="CLEAR"
-text="${CKIF} - No Error in log file found"
-elif [[ ${LISTERR} -gt 0 ]] 
-then
-WCERR=`cat ${LASTERR}| grep -oP '\[ERROR\]' | wc -l`
-WCFAT=`cat ${LASTERR}| grep -oP '\[FATAL\]' | wc -l`
-WCWARN=`cat ${LASTERR}| grep -oP '\[WARN\]' | wc -l`
-if  [[ ${WCERR} -gt 0 ]] || [[ ${WCFAT} -gt 0 ]]
-then
-RC="WARNING"
-text="${CKIF} - Error in log file found, please check ${WDIR}/${LASTERR}"
-elif [[ ${WCWARN} -gt 0 ]]
-then
-RC="WARNING
-text="${CKIF} - "Warning in log file found, please check ${WDIR}/${LASTERR}"
-else
-RC="CLEAR"
-text="${CKIF} - No Error in log file found"
-fi
-else
-echo "bad"
+    if [[ "${WCERR}" -gt 0 || "${WCFAT}" -gt 0 ]]; then
+        RC="WARNING"
+        text="${CKIF} - Error in log file found, please check ${WDIR}/${LASTERR}"
+    elif [[ "${WCWARN}" -gt 0 ]]; then
+        RC="WARNING"
+        text="${CKIF} - Warning in log file found, please check ${WDIR}/${LASTERR}"
+    else
+        RC="CLEAR"
+        text="${CKIF} - No Error in log file found"
+    fi
 fi
 
-#curl -k -v -H "Content-Type: application/json" -d '{"msg":"'"${text}"'","ServiceCIID":"'"${CIID}"'","CheckIdentifier":"'"${CKIF}"'","EventStateType":"'"${STYPE}"'","Agent":"'"${RED_CODE}"'","severity":"'"${RC}"'","HostName":"'"${HOSTNAME}"'"}' -X POST https://cemos.probes.erste-group.net:4443/  >/dev/null 2>&1
-curl -k -v -H "Authorization: Basic YzEzNTYuZXZlbnRtZ210LnJlc3Q6P3pfUiNPaFRiWGZAfXFNKVViWi5rcistVXRNJVtpVVYoMzdYQ1c/dElEYTldZylvOn09bEFmdEkmYT9TeS05UGQuMXVrcGVsR30wUTc4PUdRX31PbFBITy4/RERecXtwcjFVbg==" -H "Content-Type: application/json" -d '{"msg":"'"${text}"'","ServiceCIID":"'"${CIID}"'","CheckIdentifier":"'"${CKIF}"'","EventStateType":"'"${STYPE}"'","Agent":"'"${RED_CODE}"'","severity":"'"${RC}"'","HostName":"'"${HOSTNAME}"'"}' -X POST $CEMOS_URL  >/dev/null 2>&1
+curl -sk -H "Authorization: Basic ${AUTH_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "{\"msg\":\"${text}\",\"ServiceCIID\":\"${CIID}\",\"CheckIdentifier\":\"${CKIF}\",\"EventStateType\":\"${STYPE}\",\"Agent\":\"${RED_CODE}\",\"severity\":\"${RC}\",\"HostName\":\"${HOSTNAME}\"}" \
+    -X POST "${CEMOS_URL}" >/dev/null 2>&1
 
 echo "${text}"
 
 mailmail
-exit
+
+[[ "${RC}" == "CLEAR" ]] && exit 0 || exit 1
