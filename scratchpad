@@ -1,586 +1,65 @@
-import pandas as pd
-from pathlib import Path
-from datetime import datetime, timedelta, date
-import xml.etree.ElementTree as ET
-import zipfile
-import getpass
-import shutil
-import subprocess
-import sys
-
-# ---------------- Configuration ----------------
-
-imxuser = getpass.getuser()
-ebics_password = 'RD1IaKWVuo6qCBLm4N8k' if imxuser == 'imxuatr' else 'q84uhv1NrMvjra23pQHY'
-# NOTE: hardcoded credentials — consider moving to a restricted-permission secrets file / env var.
-
-# Folders
-pain2_folder = Path(f"/{imxuser}/intra/imx/interfaces/pain2/")
-pain1_dir = Path(f"/{imxuser}/intra/imx/interfaces/imx2bank_ct/bak")
-pain8_dir = Path(f"/{imxuser}/intra/imx/interfaces/imx2bank2/bak")
-zip_dir = Path(f"/{imxuser}/intra/imx/interfaces/pain2/pain2_from_ebics_zip/")
-results_dir = Path(f"/{imxuser}/intra/imx/interfaces/pain2/pain2_matching_results/")
-output_dir = Path("/appl/tools/WFS/apache-tomcat-9.0.119/webapps/ROOT/pain2report")
-op_file = output_dir / "index.html"
-op_excel_file = output_dir / "result.xlsx"
-FLAG_FILE = Path(f"/{imxuser}/intra/imx/interfaces/pain2/pain2_logs/email_flag.txt")
-
-# FIX: make sure directories we write into exist before we try to write
-for d in (results_dir, output_dir, FLAG_FILE.parent):
-    d.mkdir(parents=True, exist_ok=True)
-
-# Expected schema for the working DataFrame — defining this up front means
-# FIX: an empty day (no rows at all) still yields a DataFrame with the right
-# columns instead of one with zero columns, which previously caused KeyErrors
-# in the GrpSts filter and the Excel export below.
-ROW_COLUMNS = [
-    "P1P8_File", "P2_File", "MsgId", "OrgnlMsgId",
-    "ReqdColltnDt", "GrpSts", "reason", "Match_Type",
-]
-
-# ======================================
-# Get latest P2 files from EBICS
-# ======================================
-now = datetime.now()
-today_str = now.strftime("%Y%m%d")
-time_str = now.strftime("%H_%M")
-
-zip_path = zip_dir / f"p2_from_ebics_{today_str}_{time_str}.zip"
-
-result = subprocess.run(
-    [
-        "/appl/tools/WFS/java/bin/java",
-        "-jar",
-        "/appl/tools/EBICS/bltransfertool/bin/bltransfer.jar",
-        "--fetch",
-        "Intermarket Bank AG",
-        "REP:AT:SCT_pain.002_ZIP",
-        str(zip_path),
-        f"V{today_str[2:]}.B{today_str[2:]}",
-        "--password",
-        ebics_password,
-    ],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE,
-    universal_newlines=True,
-)
-
-print(result.stdout)
-print(result.stderr)
-print(result.returncode)
-
-# FIX: don't silently fall back to a stale zip if the fetch failed
-if result.returncode != 0:
-    print(f"ERROR: bltransfer fetch failed with exit code {result.returncode}. Aborting.")
-    sys.exit(result.returncode)
-
-# ======================================
-# Process P2 files - match with P1 & P8
-# ======================================
-
-today = datetime.now().date()
-
-
-# ---------------- XML Helpers ----------------
-
-# FIX: exact local-name match instead of endswith(), which could wrongly match
-# e.g. "OrgnlMsgId" when searching for "MsgId" since "OrgnlMsgId".endswith("MsgId") is True.
-def _local_name(tag: str) -> str:
-    return tag.split("}")[-1]
-
-
-def get_xml_value_from_string(xml_content, tag):
-    try:
-        root = ET.fromstring(xml_content)
-        for elem in root.iter():
-            if _local_name(elem.tag) == tag:
-                return elem.text
-    except Exception as e:
-        print(f"XML parse error: {e}")
-    return None
-
-
-def get_xml_value_from_file(file_path, tag):
-    try:
-        tree = ET.parse(file_path)
-        root = tree.getroot()
-        for elem in root.iter():
-            if _local_name(elem.tag) == tag:
-                return elem.text
-    except Exception as e:
-        print(f"Error reading {file_path}: {e}")
-    return None
-
-
-def _find_child_by_localname(elem, name):
-    for child in elem:
-        if _local_name(child.tag) == name:
-            return child
-    return None
-
-
-def get_reason_code_by_grpsts_xmlcontent(xml_content):
-    # FIX: rewritten to match by local element name instead of a derived
-    # namespace prefix. The previous version built the namespace map from
-    # root.tag.split("}")[0] — if a given P2 file has no default namespace
-    # on its root element, that derivation silently produces a bogus
-    # namespace and every ns:-prefixed find() then matches nothing, so
-    # both GrpSts and reason came back None with no error at all.
-    root = ET.fromstring(xml_content)
-
-    grp_sts_value = None
-    for elem in root.iter():
-        if _local_name(elem.tag) == "GrpSts":
-            grp_sts_value = elem.text
-            break
-
-    # Rsn is a choice between Cd (coded reason) and Prtry (bank-specific
-    # proprietary reason). AddtlInf is a separate, repeatable sibling of Rsn
-    # within the same StsRsnInf block that carries free-text detail — banks
-    # often populate AddtlInf even when Cd/Prtry is generic (e.g. "NARR"),
-    # so without it you lose the actual human-readable explanation.
-    reason_code = None
-    addtl_info_parts = []
-
-    for sts_rsn_inf in root.iter():
-        if _local_name(sts_rsn_inf.tag) != "StsRsnInf":
-            continue
-
-        block_code = None
-        rsn = _find_child_by_localname(sts_rsn_inf, "Rsn")
-        if rsn is not None:
-            cd = _find_child_by_localname(rsn, "Cd")
-            if cd is not None and cd.text:
-                block_code = cd.text
-            else:
-                prtry = _find_child_by_localname(rsn, "Prtry")
-                if prtry is not None and prtry.text:
-                    block_code = prtry.text
-
-        block_addtl = [
-            child.text.strip()
-            for child in sts_rsn_inf
-            if _local_name(child.tag) == "AddtlInf" and child.text and child.text.strip()
-        ]
-
-        # Take the first StsRsnInf block that has *either* a code or additional
-        # info — don't require both, since either can appear alone.
-        if block_code or block_addtl:
-            reason_code = block_code
-            addtl_info_parts = block_addtl
-            break
-
-    if reason_code and addtl_info_parts:
-        reason = f"{reason_code} - {'; '.join(addtl_info_parts)}"
-    elif reason_code:
-        reason = reason_code
-    elif addtl_info_parts:
-        reason = "; ".join(addtl_info_parts)
-    else:
-        reason = None
-
-    return grp_sts_value, reason
-
-
-# ---------------- Helper functions ----------------
-
-def make_p2_display(zip_info):
-    """Single source of truth for P2 display strings."""
-    return (
-        f"{datetime(*zip_info.date_time):%Y-%m-%d %H:%M:%S}"
-        f"<br>{Path(zip_info.filename).name}"
-    )
-
-
-def send_alert_email() -> bool:
-    """Returns True if the email was actually sent, False otherwise.
-
-    FIX: previously this function swallowed all its own exceptions and the
-    caller had no way to know it failed, so the "already sent today" flag
-    file got written even when the alert never actually went out.
-    """
-    MAIL_FROM = "imxprod@erstegroup.com"
-    MAIL_SUBJECT = "E2E payment alert for P1 / P8"
-    MAIL_CC = "puneet.teja@erstegroup.com"
-    # MAIL_TO = "puneet.teja@erstegroup.com"
-    MAIL_TO = "Oliver.Proksch@intermarket.at Yuesra.Mamas@intermarket.at"
-    # NOTE: double-check recipient spelling ("Yuesra" vs "Yusra"?) with the source of truth.
-    mail_body = (
-        "One or more P1 or P8 files got a P2 file with the status "
-        "RJCT, CANC or TECH:\n\n"
-        "Please check the report at:\n"
-        "http://imxappprod.eb.lan.at:8080/pain2report/"
-    )
-
-    try:
-        result = subprocess.run(
-            [
-                "mailx",
-                "-r", MAIL_FROM,
-                "-s", MAIL_SUBJECT,
-                "-c", MAIL_CC,
-                *MAIL_TO.split(),
-            ],
-            input=mail_body.encode("utf-8"),
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        print("Email sent successfully.")
-        print(f"Return code: {result.returncode}")
-        print(f"STDOUT: {result.stdout.decode('utf-8', errors='ignore')}")
-        print(f"STDERR: {result.stderr.decode('utf-8', errors='ignore')}")
-        return True
-
-    except subprocess.CalledProcessError as e:
-        print("Failed to send email.")
-        print(f"Return code: {e.returncode}")
-        print(f"STDOUT: {e.stdout.decode('utf-8', errors='ignore') if e.stdout else ''}")
-        print(f"STDERR: {e.stderr.decode('utf-8', errors='ignore') if e.stderr else ''}")
-        return False
-    except FileNotFoundError:
-        print("mailx command not found.")
-        return False
-
-
-def delete_old_files(folder, days=30):
-    """Currently a DRY RUN — only prints candidates, does not delete anything.
-    Uncomment file.unlink() below once you've confirmed the candidate list is correct.
-    """
-    cutoff = datetime.now() - timedelta(days=days)
-
-    for file in Path(folder).rglob("*"):
-        if file.is_file():
-            if datetime.fromtimestamp(file.stat().st_mtime) < cutoff:
-                # file.unlink()
-                print(f"Deleted: {file}")
-
-
-# ---------------- Step 0: Delete files older than 30 days (dry run) ----------------
-delete_old_files(pain2_folder, 30)
-
-# ---------------- Step 1: Read P1 & P8 ----------------
-rows = []
-
-
-def process_folder(folder):
-    print(f"...processing folder: {folder}")
-
-    for f in folder.glob("*"):
-        if not f.is_file() or f.name.startswith("_") or f.name.startswith("searchResult") or f.name.endswith(".Z"):
-            continue
-
-        file_date = datetime.fromtimestamp(f.stat().st_mtime).date()
-
-        if file_date != today:
-            continue
-
-        msg_id = get_xml_value_from_file(f, "MsgId")
-        reqd_colltn_dt = get_xml_value_from_file(f, "ReqdColltnDt") or "--"
-
-        if msg_id:
-            rows.append({
-                "P1P8_File": f"{datetime.fromtimestamp(f.stat().st_mtime):%Y-%m-%d %H:%M:%S}<br>{f.name}",
-                "P2_File": None,
-                "MsgId": msg_id,
-                "OrgnlMsgId": None,
-                "ReqdColltnDt": reqd_colltn_dt,
-                "GrpSts": None,
-                "reason": None,
-                "Match_Type": None,
-            })
-
-
-process_folder(pain1_dir)
-process_folder(pain8_dir)
-
-# FIX: explicit columns so an empty day still has the right schema
-df_base = pd.DataFrame(rows, columns=ROW_COLUMNS)
-
-
-# ---------------- Step 2: Get latest ZIP ----------------
-zip_files = list(zip_dir.glob("*.zip"))
-
-if not zip_files:
-    print("No zip files found")
-    sys.exit(1)
-
-latest_zip = max(zip_files, key=lambda f: f.stat().st_mtime)
-
-print(f"Using ZIP: {latest_zip}")
-
-
-# ---------------- Step 3: Process pain2 ----------------
-all_p2_files_details = {}
-p2_files_list = []
-
-with zipfile.ZipFile(latest_zip, "r") as z:
-    for p2_file_info in z.infolist():
-
-        if not p2_file_info.filename.lower().endswith(".xml"):
-            continue
-
-        p2_display = make_p2_display(p2_file_info)
-        p2_files_list.append(p2_display)
-
-        with z.open(p2_file_info) as file:
-            xml_content = file.read().decode("utf-8", errors="ignore")
-
-        org_msg_id = get_xml_value_from_string(xml_content, "OrgnlMsgId")
-        grp_sts = get_xml_value_from_string(xml_content, "GrpSts") or "UNKNOWN"
-        _, reason = get_reason_code_by_grpsts_xmlcontent(xml_content)
-
-        if org_msg_id:
-            # NOTE: if more than one P2 file can legitimately reference the same
-            # OrgnlMsgId (e.g. partial status updates), this dict keeps only the
-            # last one seen — worth confirming that's the intended business rule.
-            all_p2_files_details[org_msg_id] = {
-                "P2_File": p2_display,
-                "OrgnlMsgId": org_msg_id,
-                "GrpSts": grp_sts,
-                "P2_xml_content": xml_content,
-                "reason": reason if reason is not None else "-",
-                "Match_Type": "Mapping_P1_P8_to_P2",
-            }
-
-# ---------------- Step 4: Update df with matching P2 on msg_id = OrgnlMsgId ----------------
-for idx, row in df_base.iterrows():
-    msg_id = row["MsgId"]
-
-    if msg_id in all_p2_files_details:
-        df_base.at[idx, "P2_File"] = all_p2_files_details[msg_id]["P2_File"]
-        df_base.at[idx, "OrgnlMsgId"] = all_p2_files_details[msg_id]["OrgnlMsgId"]
-        df_base.at[idx, "GrpSts"] = all_p2_files_details[msg_id]["GrpSts"]
-        # FIX: "reason" was computed and stored in all_p2_files_details back in
-        # Step 3, but this loop never copied it into df_base — every first-pass
-        # match kept the "reason": None it was initialized with in process_folder.
-        # Only second-pass matches (Step 4b) got a reason, since that loop sets
-        # it explicitly when building second_pass_rows. This is why the same
-        # StsRsnInf content could show up correctly for one message and as None
-        # for another, depending purely on which matching pass caught it.
-        df_base.at[idx, "reason"] = all_p2_files_details[msg_id]["reason"]
-        df_base.at[idx, "Match_Type"] = all_p2_files_details[msg_id]["Match_Type"]
-
-print("===========> df base + matched:")
-print(f"len(df_base) = {len(df_base)}")
-
-print("===========> All p2_files_list in latest zip file:")
-print(f"len(p2_files_list) = {len(p2_files_list)}")
-
-print("===========> Unmatched P2 files = complete list from zip minus those matched in df:")
-p2_in_df = set(df_base["P2_File"].dropna())
-list_minus_df = [f for f in p2_files_list if f not in p2_in_df]
-print(f"len(list_minus_df) = {len(list_minus_df)}")
-
-# ---------------- Step 4b: Second Pass Matching (unmatched P2 -> search all P1 & P8) ----------------
-#
-# For each P2 file that had no match in Step 4, open it from the ZIP,
-# extract its OrgnlMsgId, then scan ALL files in pain1_dir and pain8_dir
-# (not restricted to today) looking for a file whose MsgId matches.
-
-def build_p1p8_index(folders):
-    """
-    Build a dict: MsgId -> {"P1P8_File": ..., "ReqdColltnDt": ...}
-    by scanning all valid files across the given folders.
-    """
-    index = {}
-    for folder in folders:
-        print(f"...indexing folder: {folder}")
-        for f in folder.glob("*"):
-            # FIX: apply the same filename filters as process_folder (was missing
-            # the "searchResult" exclusion here, so those files could leak into
-            # the second-pass match index inconsistently with the first pass).
-            if not f.is_file() or f.name.startswith("_") or f.name.startswith("searchResult") or f.name.endswith(".Z"):
-                continue
-            msg_id = get_xml_value_from_file(f, "MsgId")
-            if msg_id and msg_id not in index:
-                reqd_colltn_dt = get_xml_value_from_file(f, "ReqdColltnDt") or "--"
-                index[msg_id] = {
-                    "P1P8_File": (
-                        f"{datetime.fromtimestamp(f.stat().st_mtime):%Y-%m-%d %H:%M:%S}"
-                        f"<br>{f.name}"
-                    ),
-                    "ReqdColltnDt": reqd_colltn_dt,
-                }
-    return index
-
-
-p1p8_full_index = build_p1p8_index([pain1_dir, pain8_dir])
-
-second_pass_rows = []
-
-with zipfile.ZipFile(latest_zip, "r") as z:
-    # FIX: reuse make_p2_display() instead of re-deriving the same format string
-    # inline, so the two can't silently drift apart.
-    zip_info_by_display = {
-        make_p2_display(info): info
-        for info in z.infolist()
-        if info.filename.lower().endswith(".xml")
-    }
-
-    for p2_display in list_minus_df:
-        zip_info = zip_info_by_display.get(p2_display)
-        if zip_info is None:
-            print(f"WARNING: could not locate ZIP entry for '{p2_display}'")
-            continue
-
-        with z.open(zip_info) as file:
-            xml_content = file.read().decode("utf-8", errors="ignore")
-
-        org_msg_id = get_xml_value_from_string(xml_content, "OrgnlMsgId")
-        grp_sts = get_xml_value_from_string(xml_content, "GrpSts") or "UNKNOWN"
-        _, reason = get_reason_code_by_grpsts_xmlcontent(xml_content)
-
-        if not org_msg_id:
-            print(f"WARNING: no OrgnlMsgId found in '{p2_display}' — skipping")
-            continue
-
-        match = p1p8_full_index.get(org_msg_id)
-
-        if match:
-            second_pass_rows.append({
-                "P1P8_File": match["P1P8_File"],
-                "P2_File": p2_display,
-                "MsgId": org_msg_id,
-                "OrgnlMsgId": org_msg_id,
-                "ReqdColltnDt": match["ReqdColltnDt"],
-                "GrpSts": grp_sts,
-                "reason": reason if reason is not None else "-",
-                "Match_Type": "Mapping_P2_to_P1_P8",
-            })
-        else:
-            second_pass_rows.append({
-                "P1P8_File": None,
-                "P2_File": p2_display,
-                "MsgId": None,
-                "OrgnlMsgId": org_msg_id,
-                "ReqdColltnDt": "--",
-                "GrpSts": grp_sts,
-                "reason": reason if reason is not None else "-",
-                "Match_Type": "P2_Only_No_P1_P8_Found",
-            })
-
-if second_pass_rows:
-    df_second = pd.DataFrame(second_pass_rows, columns=ROW_COLUMNS)
-    df_base = pd.concat([df_base, df_second], ignore_index=True)
-
-print("===========> Final df (first pass + second pass):")
-df_base = df_base.drop_duplicates(
-    subset=["P1P8_File", "P2_File", "OrgnlMsgId"],
-    keep="first",
-)
-print(f"len(df_base) = {len(df_base)}")
-
-# ---------------- Step 6: Final Output + send email -------------
-result_df = df_base
-
-send_email_required = result_df["GrpSts"].isin(["RJCT", "CANC", "TECH"]).any()
-
-today_str_email = date.today().strftime("%Y-%m-%d")
-
-if FLAG_FILE.exists():
-    with FLAG_FILE.open("r", encoding="utf-8") as f:
-        flag_dates = {line.strip() for line in f if line.strip()}
-
-    print(flag_dates)
-    if today_str_email in flag_dates:
-        send_email_required = False
-        print(f"Email already sent today ({today_str_email}).")
-    else:
-        print(f"No email sent yet today ({today_str_email}).")
-else:
-    print(f"{FLAG_FILE} does not exist. Creating it after sending email.")
-
-# FIX: only record the flag if send_alert_email() actually reports success.
-if send_email_required:
-    if send_alert_email():
-        with FLAG_FILE.open("a", encoding="utf-8") as f:
-            f.write(today_str_email + "\n")
-        print(f"Alert email sent and date {today_str_email} recorded.")
-    else:
-        print("Alert email failed to send — flag NOT recorded, will retry next run.")
-else:
-    print("No status found matching RJCT, CANC, TECH, not sending email OR an email already sent today")
-
-
-# ---------------- Step 7: Write Output to file ----------------
-
-html_file = results_dir / f"p2__p1_8_matching_report_plus_{today_str}_{time_str}.html"
-
-if not result_df.empty:
-    result_df = result_df.drop(columns=["MsgId"], errors="ignore")
-    result_df = result_df.sort_values(by="P1P8_File")
-
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    header = f"<h2>Report generated at: {timestamp}</h2>"
-    html_table = result_df.to_html(index=False, escape=False, border=1)
-    html_content = f"""
-    <html>
-    <head>
-    <style>
-    table {{
-        border-collapse: collapse;
-        width: 100%;
-    }}
-    th, td {{
-        border: 1px solid black;
-        padding: 8px;
-        text-align: left;
-    }}
-    th {{
-        background-color: #f2f2f2;
-    }}
-    </style>
-    </head>
-    <body>
-    {header}
-    <br>E2E Payment Status Overview:<br>
-    {html_table}
-    </body>
-    </html>
-    """
-else:
-    print("DataFrame is empty — writing message to HTML file.")
-    html_content = f"""
-<html>
-<body>
-    <h2 style="color:red;">No data available</h2>
-    <p>The DataFrame is empty. No matching records were found.</p>
-    <p>Timestamp: {today_str} {time_str}</p>
-</body>
-</html>
-    """
-
-with open(html_file, "w", encoding="utf-8") as f:
-    f.write(html_content)
-
-print(f"Saved HTML: {html_file}")
-
-shutil.copy2(html_file, op_file)
-
-# ---------------- Step 8: Create Excel File ----------------
-
-# FIX: guard against an empty result set — with no columns/rows this previously
-# raised KeyError on the .str.split() calls below.
-if not result_df.empty:
-    excel_df = result_df.copy()
-
-    for col, dt_col in (("P1P8_File", "P1P8_datetime"), ("P2_File", "P2_datetime")):
-        split_cols = excel_df[col].str.split("<br>", n=1, expand=True)
-        # FIX: guarantee both columns 0 and 1 exist even if every value in this
-        # column was None (str.split(expand=True) can otherwise return just 1 column).
-        split_cols = split_cols.reindex(columns=[0, 1])
-        excel_df[dt_col] = split_cols[0]
-        excel_df[col] = split_cols[1].fillna(excel_df[col])
-
-    front_cols = ["P1P8_datetime", "P1P8_File", "P2_datetime", "P2_File"]
-    remaining_cols = [c for c in excel_df.columns if c not in front_cols]
-    excel_df = excel_df[front_cols + remaining_cols]
-
-    print(excel_df.head(10))
-    excel_file = results_dir / f"p2__p1_8_matching_report_plus_{today_str}_{time_str}.xlsx"
-    excel_df.to_excel(excel_file, index=False, engine="openpyxl")
-
-    shutil.copy2(excel_file, op_excel_file)
-else:
-    print("Result DataFrame is empty — skipping Excel export.")
+#!/bin/bash 
+
+[[ $# -ne 1 ]] && echo "Call should contain interface identifier: example ->  $0 imx2kdb" && exit 1;
+
+imxusr="imxuatr"
+WDIR=/${imxusr}/intra/imx/interfaces/$1/log
+cd ${WDIR}
+
+IFACE=`pwd | awk -F/ '{print $6}'`
+ENVIRO="UAT R"
+RED_CODE="C1356"
+CIID=4668036
+CEMOS_URL=https://eventmgmt.rest.fat.erste-group.net:443/shared
+CKIF="iMX: $ENVIRO - interface: ${IFACE}"
+STYPE="Stateless"
+imxfrom="imxuat"
+
+
+LASTERR=`ls -tr *err.log 2>/dev/null|tail -n1`
+LISTERR=`ls -l *err.log 2>/dev/null |wc -l`
+
+mailmail()
+{
+if [ ${RC} != "CLEAR" ]
+then
+echo "${text}" | mailx -r ${imxfrom}@erstegroup.com -s "Please check ${CKIF} at $HOSTNAME" -c puneet.teja@erstegroup.com GMOPiMX@erstegroup.com
+else
+echo "OK" >/dev/null
+fi
+}
+
+#echo ${WCERR}
+
+if [[ ${LISTERR} -eq 0 ]] 
+then
+RC="CLEAR"
+text="${CKIF} - No Error in log file found"
+elif [[ ${LISTERR} -gt 0 ]] 
+then
+WCERR=`cat ${LASTERR}| grep -oP '\[ERROR\]' | wc -l`
+WCFAT=`cat ${LASTERR}| grep -oP '\[FATAL\]' | wc -l`
+WCWARN=`cat ${LASTERR}| grep -oP '\[WARN\]' | wc -l`
+if  [[ ${WCERR} -gt 0 ]] || [[ ${WCFAT} -gt 0 ]]
+then
+RC="WARNING"
+text="${CKIF} - Error in log file found, please check ${WDIR}/${LASTERR}"
+elif [[ ${WCWARN} -gt 0 ]]
+then
+RC="WARNING
+text="${CKIF} - "Warning in log file found, please check ${WDIR}/${LASTERR}"
+else
+RC="CLEAR"
+text="${CKIF} - No Error in log file found"
+fi
+else
+echo "bad"
+fi
+
+#curl -k -v -H "Content-Type: application/json" -d '{"msg":"'"${text}"'","ServiceCIID":"'"${CIID}"'","CheckIdentifier":"'"${CKIF}"'","EventStateType":"'"${STYPE}"'","Agent":"'"${RED_CODE}"'","severity":"'"${RC}"'","HostName":"'"${HOSTNAME}"'"}' -X POST https://cemos.probes.erste-group.net:4443/  >/dev/null 2>&1
+curl -k -v -H "Authorization: Basic YzEzNTYuZXZlbnRtZ210LnJlc3Q6P3pfUiNPaFRiWGZAfXFNKVViWi5rcistVXRNJVtpVVYoMzdYQ1c/dElEYTldZylvOn09bEFmdEkmYT9TeS05UGQuMXVrcGVsR30wUTc4PUdRX31PbFBITy4/RERecXtwcjFVbg==" -H "Content-Type: application/json" -d '{"msg":"'"${text}"'","ServiceCIID":"'"${CIID}"'","CheckIdentifier":"'"${CKIF}"'","EventStateType":"'"${STYPE}"'","Agent":"'"${RED_CODE}"'","severity":"'"${RC}"'","HostName":"'"${HOSTNAME}"'"}' -X POST $CEMOS_URL  >/dev/null 2>&1
+
+echo "${text}"
+
+mailmail
+exit
