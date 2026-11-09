@@ -1,0 +1,285 @@
+{
+  "generated_at": "2026-11-04T13:12:08",
+  "source_file": "/Workspace/Users/sl9ta@s-mxs.net/imb-invoice-checker-expts/got_final/got_client_files_final.json",
+  "summary": {
+    "invoices": 5,
+    "invoices_with_delivery_notes": 1,
+    "invoices_with_bills_of_lading": 0,
+    "delivery_notes": 4,
+    "delivery_notes_matched": 4,
+    "bills_of_lading": 0,
+    "bills_of_lading_matched": 0
+  },
+  "invoices": [
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT742011140332098700",
+      "Lieferschein": "2610126381",
+      "Lieferscheinnummer": "2610126381",
+      "UID": [
+        "ATU57894559",
+        "ATU70749069"
+      ],
+      "auftrag": "2610128687",
+      "bank account": "Erste Bank der Österreichische Sparkasse AG Konto-Nr. 40332098700 BLZ 20111",
+      "currency": "EUR",
+      "customer address": [
+        "Luna 32",
+        "6250 Kundl"
+      ],
+      "customer name": "Truck Center GmbH",
+      "invoice date": "30.09.2026",
+      "invoice number": "2610125578",
+      "sender address": [
+        "Innsbruckerstraße 94",
+        "6300 Wörgl"
+      ],
+      "sender name": "Achleitner Reifenzentrum GMBH",
+      "total amount": "108,82",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        66
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT812011140450725015",
+      "UID": [
+        "ATU38150601",
+        "CZ25326287"
+      ],
+      "auftrag": "ATA2612794",
+      "bank account": "Erste Bank AG Intermarket",
+      "currency": "EUR",
+      "customer address": [
+        "Porici 2534/24",
+        "678 01 Blansko",
+        "Czech Republic"
+      ],
+      "customer name": [
+        "Pyrotek CZ s.r.o.",
+        "Kamil Kvasnica"
+      ],
+      "invoice date": "07. October 2026",
+      "invoice number": "ATS2632889",
+      "sender address": [
+        "Wolfgang-Pauli-Gasse 3",
+        "Postfach 2",
+        "1147 Wien",
+        "Österreich"
+      ],
+      "sender name": [
+        "Applied Chemicals Handels-GmbH",
+        "Applied Chemicals International Group - Austria"
+      ],
+      "total amount": "316.00",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        25,
+        52
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT91 2011 1403 3235 0400",
+      "UID": [
+        "ATU69978367",
+        "ATU65922308"
+      ],
+      "auftrag": [
+        "113709",
+        "113710",
+        "113712",
+        "113720",
+        "113721",
+        "113734",
+        "113788",
+        "113789",
+        "113790",
+        "113791",
+        "113792",
+        "113793",
+        "113794",
+        "113795",
+        "113830"
+      ],
+      "bank account": "Erste Bank",
+      "currency": "EUR",
+      "invoice date": "13.10.2026",
+      "invoice number": "2703203",
+      "sender address": [
+        "Franzensthalstraße 25",
+        "A-2435 Ebergassing",
+        "Berndorf 162",
+        "8324 Kirchberg an der Raab"
+      ],
+      "sender name": [
+        "KÖNIGSHOFER GmbH",
+        "Fritz Jeitler Futtermittel GmbH"
+      ],
+      "total amount": "44 239,83",
+      "delivery_notes": [
+        {
+          "document_type": "DELIVERY_NOTE",
+          "delivery note number": "151050",
+          "delivery date": "08.10.2026",
+          "order number": "113734 | 1",
+          "customer number": "412108-377",
+          "carrier name": "Cvetinovic",
+          "customer name": "Spindler Karl",
+          "sender name": "KÖNIGSHOFER GmbH",
+          "delivery address": [
+            "Winzendorf 37",
+            "8225 Pöllau",
+            "AUT"
+          ],
+          "items": [
+            {
+              "item code": "071344",
+              "item description": "Absetzfutter m, Alleinfuttermittel für Ferkel, pastus+ AMA-Gütesiegel tauglich, ÖPUL - Für stark N-reduzierte Fütterung geeignet",
+              "item quantity": "2980"
+            }
+          ],
+          "match_method": [
+            "ORDER_NUMBER"
+          ],
+          "match_confidence": "medium"
+        },
+        {
+          "document_type": "DELIVERY_NOTE",
+          "delivery note number": "151044",
+          "delivery date": "07.10.2026",
+          "order number": "113712",
+          "customer number": "412108-311",
+          "carrier name": "BL 873 FS",
+          "customer name": "Schnabl Johannes",
+          "sender name": "KÖNIGSHOFER GmbH",
+          "delivery address": [],
+          "items": [
+            {
+              "item code": "067377",
+              "item description": "RP 38 Soja H OGT m, Ergänzungsfuttermittel für Rinder, pastus+ AMA-Gütesiegel tauglich, Inhaltsstoffe je kg: Rohprotein 38,0%, Rohprotein aus NPN Verbindungen 4,9%, Rohöle/-fette 3,4%, Rohfaser 9,1%, Rohasche 6,3%, Calcium 0,42%, Phosphor 0,97%, Natrium 0,09%, Magnesium 0,42%, RNB 25,6g, nXP 220g, Zusatzstoffe je kg: Ernährungsphysiologische Zusatzstoffe: Harnstoff (3d1)* 1,7%, Zusammensetzung: Rapsextraktionsschrotfutter, Sojaextraktionsschrotfutter, Weizenkleberfutter, Trockenschlempe, Weizenkleie, Zuckerrübenmelasse, Herkunft der pflanzlichen Einzelfuttermittel: Europa, Geeignet zur Herstellung gentechnikfreier Lebensmittel, Kontrollstelle AgroVet, Einsatzmenge: bis zu 5,0kg pro Tier und Tag",
+              "item quantity": "4090 kg"
+            }
+          ],
+          "match_method": [
+            "ORDER_NUMBER"
+          ],
+          "match_confidence": "medium"
+        },
+        {
+          "document_type": "DELIVERY_NOTE",
+          "delivery note number": "151046",
+          "delivery date": "07.10.2026",
+          "order number": "113709 | 1",
+          "customer number": "412108-349",
+          "carrier name": "Istvan",
+          "customer name": "Mühlenhof Wittmannsdorf GmbH",
+          "sender name": "KÖNIGSHOFER GmbH",
+          "delivery address": [],
+          "items": [
+            {
+              "item code": "070142",
+              "item description": "Euro Mast 50 OGT zu Gerste u. Mais Ergänzungsfuttermittel für Mastschweine pastus+ AMA-Gütesiegel tauglich",
+              "item quantity": "18070"
+            }
+          ],
+          "match_method": [
+            "ORDER_NUMBER"
+          ],
+          "match_confidence": "medium"
+        },
+        {
+          "document_type": "DELIVERY_NOTE",
+          "delivery note number": "151045",
+          "delivery date": "07.10.2026",
+          "order number": "113709 | 2",
+          "customer number": "412108-349",
+          "customer name": "Mühlenhof Wittmannsdorf GmbH",
+          "sender name": "KÖNIGSHOFER GmbH",
+          "delivery address": [],
+          "items": [
+            {
+              "item code": "070171",
+              "item description": "Erg. Endmast Mühlenhof OGT m Ergänzungsfuttermittel für Mastschweine pastus+ AMA-Gütesiegel tauglich Inhaltsstoffe je kg: Rohprotein 13,7%, Rohöle/-fette 2,6%, ME 12,40MJ, Rohfaser 4,6%, Rohasche 4,7%, Lysin 0,77%, Methionin 0,24%, Threonin 0,50%, Tryptophan 0,17%, Calcium 0,54%, Phosphor 0,52%, Natrium 0,23% Zusatzstoffe je kg: Ernährungsphysiologische Zusatzstoffe: Vitamin A (3a672a) 4.6801.E., Vitamin D3 (3a671) 1.4401.E., Vitamin E (3a700) 173mg, Kupfer als Kupfer-(II)-sulfat, Pentahydrat (3b405) 12mg. Eisen als Eisen-( )-sulfat, Monohydrat (3b103) 96mg, Jod als Calciumiodat, wasserfrei (3b202) 1,0mg, Mangar als Mangan-(II)-oxid (3b502) 48mg, Zink als Zinkoxid (3b603) 64mg, Selen als Natriumselenit (36801) 0,3mg Zootechnische Zusatzstoffe: 6-Phytase (EC 3.1.3.26) (4a18) 600FYT Zusammensetzung: Roggen, Weizenkleie, Rapsextraktionsschrotfutter, Brotbrösel, Calciumcarbonat, Zuckerrübenmelasse, Natriumchlorid, Magnesiumphosphat Geeignet zur Herstellung gentechnikfreier Lebensmittel, Kontrollstelle AgroVet Beimischrate: 35% zu betriebsindividueller Rationsgestaltung LotNr:16215 Ablaufdatum : 05.04.2027",
+              "item quantity": "6000"
+            }
+          ],
+          "match_method": [
+            "ORDER_NUMBER"
+          ],
+          "match_confidence": "medium"
+        }
+      ],
+      "bills_of_lading": [],
+      "source_records": [
+        2,
+        29
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT86 2011 1501 1617 1100",
+      "Lieferschein": "26/00357",
+      "Lieferscheinnummer": "26/00357",
+      "UID": [
+        "ATU74251702",
+        "DE125915430"
+      ],
+      "auftrag": "26/00174",
+      "bank account": "Intermarket Bank AG",
+      "currency": "EUR",
+      "customer address": [
+        "Im Schlabruch 4",
+        "59872 MESCHEDE",
+        "DEUTSCHLAND"
+      ],
+      "customer name": "Dünschede Fahrzeugbau GmbH & Co KG",
+      "invoice date": "30.09.2026",
+      "invoice number": "26/00309",
+      "sender address": [
+        "Nordstraße 2",
+        "AT-5301 Eugendorf"
+      ],
+      "sender name": "Wingliner GmbH",
+      "total amount": "30.761,24",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        10,
+        37
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT712011140338269700",
+      "UID": "ATU14661702",
+      "auftrag": "2691269/A193710210016",
+      "bank account": "INTERMARKET BANK AG, Am Belvedere 1, A-1100 Wien",
+      "currency": "EUR",
+      "customer address": [
+        "Leberstraße 120",
+        "1110 Wien"
+      ],
+      "customer name": "Equans Gebäudetechnik GmbH",
+      "invoice date": "19.10.2026",
+      "invoice number": "6632",
+      "sender address": [
+        "Südtiroler Gasse 17",
+        "2340 Mödling"
+      ],
+      "sender name": "Cooltex Kältetechnik GmbH",
+      "total amount": "280.039,60",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        12,
+        39
+      ]
+    }
+  ],
+  "unmatched_delivery_notes": [],
+  "unmatched_bills_of_lading": []
+}

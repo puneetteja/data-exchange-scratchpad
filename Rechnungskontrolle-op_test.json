@@ -1,0 +1,123 @@
+[
+  {
+    "documents": [
+      {
+        "docRefUnique": "A70F333R",
+        "documentNumber": "2610125578",
+        "amount": "108.82",
+        "currency": "EUR",
+        "clientName": "ACHLEITNER REIFENZENTRUM GMBH",
+        "debtorName": "TRUCK CENTER GMBH",
+        "requiredDocuments": [
+          "invoice"
+        ]
+      },
+      {
+        "docRefUnique": "A70F5CNN",
+        "documentNumber": "2632889",
+        "amount": "316",
+        "currency": "EUR",
+        "clientName": "APPLIED CHEMICALS HANDELS-GMBH",
+        "debtorName": "PYROTEK CZ, S.R.O.",
+        "requiredDocuments": [
+          "invoice"
+        ]
+      },
+      {
+        "docRefUnique": "A70F6L3Z",
+        "documentNumber": "2703203",
+        "amount": "44239.83",
+        "currency": "EUR",
+        "clientName": "KÖNIGSHOFER GMBH",
+        "debtorName": "FRITZ JEITLER FUTTERMITTEL GMBH",
+        "requiredDocuments": [
+          "invoice",
+          "deliverynote"
+        ]
+      },
+      {
+        "docRefUnique": "A70F1ZW1",
+        "documentNumber": "309",
+        "amount": "30761.24",
+        "currency": "EUR",
+        "clientName": "WINGLINER GMBH",
+        "debtorName": "DÜNSCHEDE FAHRZEUGBAU GMBH & CO. KOMMANDITGESELLSCHAFT",
+        "requiredDocuments": [
+          "invoice",
+          "deliverynote"
+        ]
+      },
+      {
+        "docRefUnique": "A70F8H3G",
+        "documentNumber": "6632",
+        "amount": "49960.25",
+        "currency": "EUR",
+        "clientName": "COOLTEX KÄLTETECHNIK GMBH",
+        "debtorName": "EQUANS GEBÄUDETECHNIK GMBH",
+        "requiredDocuments": [
+          "invoice",
+          "deliverynote"
+        ]
+      },
+      {
+        "docRefUnique": "A70F69DG",
+        "documentNumber": "26303",
+        "amount": "12914.69",
+        "currency": "EUR",
+        "clientName": "CKS METALLTECHNIK GMBH",
+        "debtorName": "MARS AUSTRIA GMBH & CO OG",
+        "requiredDocuments": [
+          "invoice"
+        ]
+      },
+      {
+        "docRefUnique": "A70F5R52",
+        "documentNumber": "26303",
+        "amount": "25132.8",
+        "currency": "EUR",
+        "clientName": "FLUX CONSULTING GMBH",
+        "debtorName": "T-SYSTEMS AUSTRIA GESMBH",
+        "requiredDocuments": [
+          "invoice",
+          "deliverynote"
+        ]
+      },
+      {
+        "docRefUnique": "A70F65SC",
+        "documentNumber": "260475",
+        "amount": "23624.35",
+        "currency": "EUR",
+        "clientName": "VOQUZ IT SOLUTIONS GMBH",
+        "debtorName": "PROGRAMMIERFABRIK GMBH",
+        "requiredDocuments": [
+          "invoice",
+          "deliverynote"
+        ]
+      },
+      {
+        "docRefUnique": "A70FA5JJ",
+        "documentNumber": "52603753",
+        "amount": "197310.5",
+        "currency": "USD",
+        "clientName": "CONCEPT COOL VERTRIEBS- GESELLSCHAFT M.B.H.",
+        "debtorName": "DYHRBERG AG",
+        "requiredDocuments": [
+          "invoice",
+          "deliverynote"
+        ]
+      },
+      {
+        "docRefUnique": "A70FACS6",
+        "documentNumber": "6061768",
+        "amount": "29110.03",
+        "currency": "CHF",
+        "clientName": "WÜRTH HOCHENBURGER AG",
+        "debtorName": "KELLER-FREI AG",
+        "requiredDocuments": [
+          "invoice",
+          "deliverynote"
+        ]
+      }
+    ]
+  }
+]
