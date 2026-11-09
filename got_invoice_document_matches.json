@@ -1,0 +1,2744 @@
+{
+  "generated_at": "2026-11-04T13:12:08",
+  "source_file": "/Workspace/Users/sl9ta@s-mxs.net/imb-invoice-checker-expts/got_final/got_client_files_final.json",
+  "summary": {
+    "invoices": 35,
+    "invoices_with_delivery_notes": 2,
+    "invoices_with_bills_of_lading": 0,
+    "delivery_notes": 9,
+    "delivery_notes_matched": 6,
+    "bills_of_lading": 0,
+    "bills_of_lading_matched": 0
+  },
+  "invoices": [
+    {
+      "document_type": "INVOICE",
+      "UID": [
+        "16-1644464",
+        "872340018"
+      ],
+      "auftrag": [
+        "3456028174",
+        "3456027395"
+      ],
+      "bank account": "Account Number: 892029919",
+      "billing address": [
+        "Schnellecke Logistics SC, LLC",
+        "8501 Palmetto Commerce Parkway",
+        "Ladson SC 29456"
+      ],
+      "currency": "USD",
+      "customer address": [
+        "8501 Palmetto Commerce Parkway",
+        "Ladson SC 29456"
+      ],
+      "customer name": "Mercedes-Benz Vans, LLC",
+      "invoice date": "09/30/2026",
+      "invoice number": "9000046507",
+      "sender address": [
+        "8501 Palmetto Commerce Parkway, Ladson SC 29456",
+        "HSBC Bank USA, N.A.",
+        "66 Hudson Blvd",
+        "New York, New York 10001"
+      ],
+      "sender name": [
+        "Schnellecke Logistics SC, LLC",
+        "Schnellecke Logistics South Carolina, LLC."
+      ],
+      "total amount": "1,036,367.91 USD",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        0,
+        27
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "auftrag": [
+        "34477917",
+        "39457"
+      ],
+      "billing address": [
+        "POLIGONO LANDABEN S/N",
+        "APARTADO DE CORREOS 1311",
+        "31080 PAMPLONA - ESPAÑA",
+        "NIF ESA31472459"
+      ],
+      "currency": "EUR",
+      "customer address": [
+        "POLIGONO LANDABEN S/N",
+        "APARTADO DE CORREOS 1311",
+        "31080 PAMPLONA - ESPAÑA",
+        "NIF ESA31472459"
+      ],
+      "customer name": "VOLKSWAGEN NAVARRA, S.A.",
+      "invoice date": "30.09.2026",
+      "invoice number": "NT0545",
+      "sender address": [
+        "PO IND ARAZURI ORCOIEN",
+        "31160 ORKOIEN",
+        "NAVARRA",
+        "NIF ESB71364863"
+      ],
+      "sender name": "KAROSSERIEWERKE DRESDEN ESPAÑA",
+      "total amount": "1.180.123,67",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        1,
+        28
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT91 2011 1403 3235 0400",
+      "UID": [
+        "ATU69978367",
+        "ATU65922308"
+      ],
+      "auftrag": [
+        "113709",
+        "113710",
+        "113712",
+        "113720",
+        "113721",
+        "113734",
+        "113788",
+        "113789",
+        "113790",
+        "113791",
+        "113792",
+        "113793",
+        "113794",
+        "113795",
+        "113830"
+      ],
+      "bank account": "Erste Bank",
+      "currency": "EUR",
+      "invoice date": "13.10.2026",
+      "invoice number": "2703203",
+      "sender address": [
+        "Franzensthalstraße 25",
+        "A-2435 Ebergassing",
+        "Berndorf 162",
+        "8324 Kirchberg an der Raab"
+      ],
+      "sender name": [
+        "KÖNIGSHOFER GmbH",
+        "Fritz Jeitler Futtermittel GmbH"
+      ],
+      "total amount": "44 239,83",
+      "delivery_notes": [
+        {
+          "document_type": "DELIVERY_NOTE",
+          "delivery note number": "151050",
+          "delivery date": "08.10.2026",
+          "order number": "113734 | 1",
+          "customer number": "412108-377",
+          "carrier name": "Cvetinovic",
+          "customer name": "Spindler Karl",
+          "sender name": "KÖNIGSHOFER GmbH",
+          "delivery address": [
+            "Winzendorf 37",
+            "8225 Pöllau",
+            "AUT"
+          ],
+          "items": [
+            {
+              "item code": "071344",
+              "item description": "Absetzfutter m, Alleinfuttermittel für Ferkel, pastus+ AMA-Gütesiegel tauglich, ÖPUL - Für stark N-reduzierte Fütterung geeignet",
+              "item quantity": "2980"
+            }
+          ],
+          "match_method": [
+            "ORDER_NUMBER"
+          ],
+          "match_confidence": "medium"
+        },
+        {
+          "document_type": "DELIVERY_NOTE",
+          "delivery note number": "151044",
+          "delivery date": "07.10.2026",
+          "order number": "113712",
+          "customer number": "412108-311",
+          "carrier name": "BL 873 FS",
+          "customer name": "Schnabl Johannes",
+          "sender name": "KÖNIGSHOFER GmbH",
+          "delivery address": [],
+          "items": [
+            {
+              "item code": "067377",
+              "item description": "RP 38 Soja H OGT m, Ergänzungsfuttermittel für Rinder, pastus+ AMA-Gütesiegel tauglich, Inhaltsstoffe je kg: Rohprotein 38,0%, Rohprotein aus NPN Verbindungen 4,9%, Rohöle/-fette 3,4%, Rohfaser 9,1%, Rohasche 6,3%, Calcium 0,42%, Phosphor 0,97%, Natrium 0,09%, Magnesium 0,42%, RNB 25,6g, nXP 220g, Zusatzstoffe je kg: Ernährungsphysiologische Zusatzstoffe: Harnstoff (3d1)* 1,7%, Zusammensetzung: Rapsextraktionsschrotfutter, Sojaextraktionsschrotfutter, Weizenkleberfutter, Trockenschlempe, Weizenkleie, Zuckerrübenmelasse, Herkunft der pflanzlichen Einzelfuttermittel: Europa, Geeignet zur Herstellung gentechnikfreier Lebensmittel, Kontrollstelle AgroVet, Einsatzmenge: bis zu 5,0kg pro Tier und Tag",
+              "item quantity": "4090 kg"
+            }
+          ],
+          "match_method": [
+            "ORDER_NUMBER"
+          ],
+          "match_confidence": "medium"
+        },
+        {
+          "document_type": "DELIVERY_NOTE",
+          "delivery note number": "151046",
+          "delivery date": "07.10.2026",
+          "order number": "113709 | 1",
+          "customer number": "412108-349",
+          "carrier name": "Istvan",
+          "customer name": "Mühlenhof Wittmannsdorf GmbH",
+          "sender name": "KÖNIGSHOFER GmbH",
+          "delivery address": [],
+          "items": [
+            {
+              "item code": "070142",
+              "item description": "Euro Mast 50 OGT zu Gerste u. Mais Ergänzungsfuttermittel für Mastschweine pastus+ AMA-Gütesiegel tauglich",
+              "item quantity": "18070"
+            }
+          ],
+          "match_method": [
+            "ORDER_NUMBER"
+          ],
+          "match_confidence": "medium"
+        },
+        {
+          "document_type": "DELIVERY_NOTE",
+          "delivery note number": "151045",
+          "delivery date": "07.10.2026",
+          "order number": "113709 | 2",
+          "customer number": "412108-349",
+          "customer name": "Mühlenhof Wittmannsdorf GmbH",
+          "sender name": "KÖNIGSHOFER GmbH",
+          "delivery address": [],
+          "items": [
+            {
+              "item code": "070171",
+              "item description": "Erg. Endmast Mühlenhof OGT m Ergänzungsfuttermittel für Mastschweine pastus+ AMA-Gütesiegel tauglich Inhaltsstoffe je kg: Rohprotein 13,7%, Rohöle/-fette 2,6%, ME 12,40MJ, Rohfaser 4,6%, Rohasche 4,7%, Lysin 0,77%, Methionin 0,24%, Threonin 0,50%, Tryptophan 0,17%, Calcium 0,54%, Phosphor 0,52%, Natrium 0,23% Zusatzstoffe je kg: Ernährungsphysiologische Zusatzstoffe: Vitamin A (3a672a) 4.6801.E., Vitamin D3 (3a671) 1.4401.E., Vitamin E (3a700) 173mg, Kupfer als Kupfer-(II)-sulfat, Pentahydrat (3b405) 12mg. Eisen als Eisen-( )-sulfat, Monohydrat (3b103) 96mg, Jod als Calciumiodat, wasserfrei (3b202) 1,0mg, Mangar als Mangan-(II)-oxid (3b502) 48mg, Zink als Zinkoxid (3b603) 64mg, Selen als Natriumselenit (36801) 0,3mg Zootechnische Zusatzstoffe: 6-Phytase (EC 3.1.3.26) (4a18) 600FYT Zusammensetzung: Roggen, Weizenkleie, Rapsextraktionsschrotfutter, Brotbrösel, Calciumcarbonat, Zuckerrübenmelasse, Natriumchlorid, Magnesiumphosphat Geeignet zur Herstellung gentechnikfreier Lebensmittel, Kontrollstelle AgroVet Beimischrate: 35% zu betriebsindividueller Rationsgestaltung LotNr:16215 Ablaufdatum : 05.04.2027",
+              "item quantity": "6000"
+            }
+          ],
+          "match_method": [
+            "ORDER_NUMBER"
+          ],
+          "match_confidence": "medium"
+        }
+      ],
+      "bills_of_lading": [],
+      "source_records": [
+        2,
+        29
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT95 2011 1403 3237 7100",
+      "UID": [
+        "ATU 39942906",
+        "ATU 50894206"
+      ],
+      "bank account": "ERSTE BANK, ÖSTERREICHISCHE SPARKASSEN AG",
+      "currency": "€",
+      "customer address": [
+        "Kratochwjlestraße 4",
+        "1220 Wien"
+      ],
+      "customer name": "Europ Assistance Gesellschaft m.b.H.",
+      "invoice date": "14.09.2026",
+      "invoice number": "18922",
+      "sender address": [
+        "Digital-, Offset- & Siebdruck",
+        "inh. gerald mariacher",
+        "1190 wien",
+        "döblinger hauptstraße 60/1",
+        "telefon +43(1)367 80 90",
+        "office@druck19.at"
+      ],
+      "sender name": "DRUCK 19",
+      "total amount": "12.966,00 €",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        3,
+        30
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT91 2011 1403 3235 0400",
+      "Lieferschein": [
+        "LFS 202701154",
+        "LFS 202701155",
+        "LFS 202701156",
+        "LFS 202701157",
+        "LFS 202701158",
+        "LFS 202701159",
+        "LFS 202701161",
+        "LFS 202701160",
+        "LFS 202701162",
+        "LFS 202701162",
+        "LFS 202701160",
+        "LFS 202701161",
+        "LFS 202701158",
+        "LFS 202701159",
+        "LFS 202701157",
+        "LFS 202701154",
+        "LFS 202701155",
+        "LFS 202701156"
+      ],
+      "Lieferscheinnummer": [
+        "202701154",
+        "202701155",
+        "202701156",
+        "202701157",
+        "202701158",
+        "202701159",
+        "202701161",
+        "202701160",
+        "202701162"
+      ],
+      "UID": [
+        "ATU69978367",
+        "ATU60739525"
+      ],
+      "auftrag": [
+        "111949",
+        "112030",
+        "112249",
+        "112452",
+        "112729",
+        "112841",
+        "113147",
+        "113152",
+        "113242"
+      ],
+      "bank account": "Erste Bank",
+      "currency": "EUR",
+      "customer address": [
+        "Diendorf 12",
+        "3452 Atzenbrugg"
+      ],
+      "customer name": "Schrall-El GmbH",
+      "invoice date": "30.09.2026",
+      "invoice number": "2703096",
+      "sender address": [
+        "Franzensthalstraße 25",
+        "A-2435 Ebergassing"
+      ],
+      "sender name": "KÖNIGSHOFER GmbH",
+      "total amount": "45 047,62",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        4,
+        31
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT91 2011 1403 3235 0400",
+      "Lieferschein": [
+        "LFS 202701163",
+        "LFS 202701164",
+        "LFS 202701166",
+        "LFS 202701165",
+        "LFS 202701167",
+        "LFS 202701168",
+        "LFS 202701169",
+        "LFS 202701170"
+      ],
+      "Lieferscheinnummer": [
+        "202701163",
+        "202701164",
+        "202701166",
+        "202701165",
+        "202701167",
+        "202701168",
+        "202701169",
+        "202701170"
+      ],
+      "UID": [
+        "ATU69978367",
+        "ATU60739525"
+      ],
+      "auftrag": [
+        "111950",
+        "112031",
+        "112453",
+        "112479",
+        "112692",
+        "112838",
+        "113060",
+        "113297"
+      ],
+      "bank account": "Erste Bank",
+      "currency": "EUR",
+      "customer address": [
+        "Diendorf 12",
+        "3452 Atzenbrugg"
+      ],
+      "customer name": [
+        "Schrall-El GmbH",
+        "Frischeierproduktion"
+      ],
+      "invoice date": "30.09.2026",
+      "invoice number": "2703097",
+      "sender address": [
+        "Franzensthalstraße 25",
+        "A-2435 Ebergassing"
+      ],
+      "sender name": "KÖNIGSHOFER GmbH",
+      "total amount": "30 014,55 EUR",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        5,
+        32
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT91 2011 1403 3235 0400",
+      "Lieferschein": [
+        "LFS 202701171",
+        "LFS 202701172",
+        "LFS 202701173",
+        "LFS 202701175",
+        "LFS 202701174",
+        "LFS 202701176",
+        "LFS 202701177",
+        "LFS 202701178",
+        "LFS 202701179"
+      ],
+      "Lieferscheinnummer": [
+        "202701171",
+        "202701172",
+        "202701173",
+        "202701175",
+        "202701174",
+        "202701176",
+        "202701177",
+        "202701178",
+        "202701179"
+      ],
+      "UID": [
+        "ATU69978367",
+        "ATU60739525"
+      ],
+      "auftrag": [
+        "111951",
+        "112032",
+        "112250",
+        "112451",
+        "112480",
+        "112730",
+        "112842",
+        "113153",
+        "113243"
+      ],
+      "bank account": "Erste Bank",
+      "billing address": [
+        "Schrall-El GmbH",
+        "Frischeierproduktion",
+        "Diendorf 12",
+        "3452 Atzenbrugg"
+      ],
+      "currency": "EUR",
+      "customer address": [
+        "Diendorf 12",
+        "3452 Atzenbrugg"
+      ],
+      "customer name": [
+        "Schrall-El GmbH",
+        "Frischeierproduktion"
+      ],
+      "invoice date": "30.09.2026",
+      "invoice number": "2703098",
+      "sender address": [
+        "Franzensthalstraße 25",
+        "A-2435 Ebergassing",
+        "ebergassing@koenigshofer.at"
+      ],
+      "sender name": "KÖNIGSHOFER GmbH",
+      "total amount": "35 008,53",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        6,
+        33
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT91 2011 1403 3235 0400",
+      "Lieferschein": "LFS vom 9.10.2026",
+      "UID": [
+        "ATU69978367",
+        "ATU65922308"
+      ],
+      "auftrag": [
+        "113551",
+        "113552",
+        "113553",
+        "113554",
+        "113555",
+        "113556",
+        "113561",
+        "113600",
+        "113601",
+        "113602",
+        "113612",
+        "113624",
+        "113631",
+        "113632",
+        "113633",
+        "113634",
+        "113639",
+        "113653",
+        "113675",
+        "113690"
+      ],
+      "bank account": "Erste Bank",
+      "billing address": [
+        "Franzensthalstraße 25",
+        "A-2435 Ebergassing"
+      ],
+      "currency": "EUR",
+      "customer address": [
+        "Alois-Krall-Weg 71, 9500 Villach",
+        "Mühlaustraße 45, 8501 Lieboch",
+        "St Johann 6, 9341 Straßburg",
+        "Neuhofen-Dorf 7, 8732 Seckau",
+        "Puchweg 70/1, 8250 Vorau",
+        "Trautmannsdorf 24, 8343 Bad Gleichenberg",
+        "Stiefing 3, 8413 St.Georgen an der Stiefing",
+        "Gassing 3, 9300 St. Veit an der Glan",
+        "Naßweg 5, 9560 Feldkirchen in Kärnten",
+        "Seibersdorf 27, 8423 St. Veit/Südsteiermark",
+        "Unterneuberg 4, 8225 Pöllau",
+        "Steindorf 1, 8142 Wundschuh",
+        "Oberjahring 1, 8505 Sankt Nikolai im Sausal",
+        "Ungerdorf 3, 8091 Jagerberg",
+        "Herzogberg 11, 8652 Kindberg",
+        "Pichl 2, 8715 St. Margarethen/Knittelfeld",
+        "Sichart 29, 8254 Wenigzell",
+        "Obersaifen 14, 8225 Pöllau",
+        "Untergreith 60, 8453 Sankt Johann im Saggautal",
+        "Wolfgrub 15, 8230 Hartberg"
+      ],
+      "customer name": [
+        "Schnabl Johannes",
+        "Wieser Peter",
+        "Leitgeb Armin",
+        "Quinz Johann",
+        "Pichler Andreas",
+        "Fritz Robert",
+        "Strohmaier Hermann",
+        "Kienberger Hannes",
+        "Inglitsch Martin",
+        "Starz Martin",
+        "Steiner Josef",
+        "Simperl Wilhelm",
+        "Kappel Otmar",
+        "Lückl Andreas",
+        "Hofer Katrin",
+        "Puster Michael",
+        "Kerschbaumer Michael",
+        "Schweighofer-Goger Stefanie & Andre",
+        "Neger Viktoria",
+        "Mauerhofer Johann"
+      ],
+      "invoice date": "09.10.2026",
+      "invoice number": "2703107",
+      "sender address": [
+        "Franzensthalstraße 25",
+        "A-2435 Ebergassing",
+        "Berndorf 162",
+        "8324 Kirchberg an der Raab"
+      ],
+      "sender name": [
+        "KÖNIGSHOFER GmbH",
+        "Fritz Jeitler Futtermittel GmbH"
+      ],
+      "total amount": "45 821,96",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        7,
+        34
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT91 2011 1403 3235 0400",
+      "Lieferschein": [
+        "LFS vom 19.10.2026",
+        "LFS vom 19.10.2026"
+      ],
+      "UID": [
+        "ATU69978367",
+        "ATU65922308"
+      ],
+      "auftrag": [
+        "114061",
+        "114063",
+        "114065",
+        "114066",
+        "114068",
+        "114078",
+        "114082",
+        "114106",
+        "114112",
+        "114114",
+        "114119",
+        "114128",
+        "114129",
+        "114130",
+        "114132",
+        "114183"
+      ],
+      "bank account": [
+        "Erste Bank",
+        "IBAN AT91 2011 1403 3235 0400",
+        "BIC GIBAATWW"
+      ],
+      "currency": "EUR",
+      "customer address": [
+        "Petersdorf 24, 8350 Fehring",
+        "Naßweg 5, 9560 Feldkirchen in Kärnten",
+        "Auersbachstraße 18, 8680 Mürzzuschlag",
+        "Dobl-Dorf 17, 8143 Dobl-Zwaring",
+        "Hasreith 19, 8522 Groß Sankt Florian",
+        "Puchegg 20, 8250 Vorau",
+        "Tulwitzviertel 31, 8163 Fladnitz an der Teichalm",
+        "Hart 11, 8410 Wildon",
+        "Haselbach 8, 8552 Eibiswald",
+        "Kirchbach 83, 8082 Kirchbach-Zerlach",
+        "Grassen 2, 9300 St. Veit an der Glan",
+        "St. Margarethen 37/2, 8321 St. Margarethen an der Raab",
+        "Kalvarienbergstraße 1, 8142 Wundschuh",
+        "Mühlweg 85, 8271 Bad Waltersdorf",
+        "Wetzelsdorf 3, 8083 Sankt Stefan im Rosental",
+        "Sichart 29, 8254 Wenigzell"
+      ],
+      "customer name": [
+        "Schmied Anton",
+        "Inglitsch Martin",
+        "Hirsch Günther",
+        "Harzl Astrid",
+        "Pommer Renate",
+        "Pichler Martin",
+        "Mandl Franz",
+        "Gobly-Heigl Hubert",
+        "Kainacher Anton",
+        "Süssmaier Franz",
+        "Ogriseg Andreas",
+        "Loidl KG",
+        "Nager Werner",
+        "Pichler Franz",
+        "Krottmeier Rudolf",
+        "Kerschbaumer Michael"
+      ],
+      "invoice date": "19.10.2026",
+      "invoice number": "2703356",
+      "sender address": [
+        "Franzensthalstraße 25",
+        "A-2435 Ebergassing",
+        "Berndorf 162",
+        "8324 Kirchberg an der Raab"
+      ],
+      "sender name": [
+        "KÖNIGSHOFER GmbH",
+        "Fritz Jeitler Futtermittel GmbH"
+      ],
+      "total amount": "47 225,43 EUR",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        8,
+        35
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT95 2011 1403 3237 7100",
+      "UID": [
+        "ATU80864101",
+        "ATU 50894206"
+      ],
+      "auftrag": "23-09-26",
+      "bank account": "ERSTE BANK, ÖSTERREICHISCHE SPARKASSEN AG",
+      "currency": "€",
+      "customer address": [
+        "Probusgasse 1",
+        "1190 Wien"
+      ],
+      "customer name": "Cuula Technologies Flex Co",
+      "invoice date": "01.10.2026",
+      "invoice number": "18952",
+      "sender address": [
+        "Döblinger Hauptstraße 60/1",
+        "1190 Wien",
+        "Telefon +43(1)367 80 90",
+        "office@druck19.at"
+      ],
+      "sender name": "DRUCK 19",
+      "total amount": "7.887,00 €",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        9,
+        36
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT86 2011 1501 1617 1100",
+      "Lieferschein": "26/00357",
+      "Lieferscheinnummer": "26/00357",
+      "UID": [
+        "ATU74251702",
+        "DE125915430"
+      ],
+      "auftrag": "26/00174",
+      "bank account": "Intermarket Bank AG",
+      "currency": "EUR",
+      "customer address": [
+        "Im Schlabruch 4",
+        "59872 MESCHEDE",
+        "DEUTSCHLAND"
+      ],
+      "customer name": "Dünschede Fahrzeugbau GmbH & Co KG",
+      "invoice date": "30.09.2026",
+      "invoice number": "26/00309",
+      "sender address": [
+        "Nordstraße 2",
+        "AT-5301 Eugendorf"
+      ],
+      "sender name": "Wingliner GmbH",
+      "total amount": "30.761,24",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        10,
+        37
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT86 2011 1501 1617 1100",
+      "Lieferschein": "26/00366",
+      "Lieferscheinnummer": "26/00366",
+      "UID": [
+        "UID-ATU74251702",
+        "DE 125915430"
+      ],
+      "auftrag": "26/00175",
+      "bank account": "Intermarket Bank AG",
+      "currency": "EUR",
+      "customer address": [
+        "Im Schlabruch 4",
+        "59872 MESCHEDE",
+        "DEUTSCHLAND"
+      ],
+      "customer name": "Dünschede Fahrzeugbau GmbH & Co KG",
+      "invoice date": "07.10.2026",
+      "invoice number": "26/00317",
+      "sender address": [
+        "Nordstraße 2",
+        "AT-5301 Eugendorf"
+      ],
+      "sender name": "Wingliner GmbH",
+      "total amount": "32.337,19",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        11,
+        38
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT712011140338269700",
+      "UID": "ATU14661702",
+      "auftrag": "2691269/A193710210016",
+      "bank account": "INTERMARKET BANK AG, Am Belvedere 1, A-1100 Wien",
+      "currency": "EUR",
+      "customer address": [
+        "Leberstraße 120",
+        "1110 Wien"
+      ],
+      "customer name": "Equans Gebäudetechnik GmbH",
+      "invoice date": "19.10.2026",
+      "invoice number": "6632",
+      "sender address": [
+        "Südtiroler Gasse 17",
+        "2340 Mödling"
+      ],
+      "sender name": "Cooltex Kältetechnik GmbH",
+      "total amount": "280.039,60",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        12,
+        39
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT31 2011 1403 3260 9500",
+      "UID": [
+        "ATU49837903",
+        "ATU41167802"
+      ],
+      "bank account": "Erste Bank der österreichischen Sparkassen AG",
+      "currency": "€",
+      "customer address": [
+        "Altmannsdorfer Straße 76 / 1.OG",
+        "1120 Wien"
+      ],
+      "customer name": "Gemeinnützige Siedlungs-Genossenschaft Altmannsdorf und Hetzendorf",
+      "invoice date": "21.10.2026",
+      "invoice number": "26-0937",
+      "sender address": "A-1210 Wien, Brünner Str. 282",
+      "sender name": "R+H Bau GmbH",
+      "total amount": "10.620,00",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        13,
+        40
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT86 2011 1501 1617 1100",
+      "Lieferschein": "26/00377",
+      "Lieferscheinnummer": "26/00377",
+      "UID": [
+        "ATU74251702",
+        "ATU42021003"
+      ],
+      "auftrag": "26/00208",
+      "bank account": "Intermarket Bank AG",
+      "currency": "EUR",
+      "customer address": [
+        "Badstubenweg 58",
+        "9500 Villach"
+      ],
+      "customer name": "Karosseriebau Glinzner GmbH",
+      "invoice date": "14.10.2026",
+      "invoice number": "26/00331",
+      "sender address": [
+        "Nordstraße 2",
+        "AT-5301 Eugendorf"
+      ],
+      "sender name": "Wingliner GmbH",
+      "total amount": "132.878,40",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        14,
+        41
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT742011140332098700",
+      "Lieferscheinnummer": [
+        "2610826509",
+        "2610826842",
+        "2610826841",
+        "2610826847",
+        "2610826534",
+        "2610826555",
+        "2610826843",
+        "2610826994",
+        "2610827105",
+        "2610827081",
+        "2610827084",
+        "2610827079",
+        "2610827104",
+        "2610826603",
+        "2610826530",
+        "2610827107",
+        "2610826777",
+        "2610826531",
+        "2610827083",
+        "2610827080",
+        "2610827082",
+        "2610826610",
+        "2610826573",
+        "2610827099",
+        "2610827108",
+        "2610827150",
+        "2610826747",
+        "2610826688",
+        "2610827153",
+        "2610826772",
+        "2610826775",
+        "2610826773",
+        "2610826774",
+        "2610826794",
+        "2610826808",
+        "2610826797",
+        "2610826792",
+        "2610826799",
+        "2610826736",
+        "2610826511",
+        "2610826512",
+        "2610826829",
+        "2610826524",
+        "2610826525",
+        "2610826526",
+        "2610826532",
+        "2610826641",
+        "2610826533",
+        "2610826615",
+        "2610826567",
+        "2610826564",
+        "2610826568",
+        "2610826565",
+        "2610826581",
+        "2610826606",
+        "2610826607",
+        "2610826614",
+        "2610826611",
+        "2610826618",
+        "2610826624",
+        "2610826633",
+        "2610826637",
+        "2610826640",
+        "2610826675",
+        "2610826688",
+        "2610826726",
+        "2610826727",
+        "2610826728",
+        "2610826731",
+        "2610826735",
+        "2610826736",
+        "2610826737",
+        "2610826738",
+        "2610826739",
+        "2610826740",
+        "2610826741",
+        "2610826744",
+        "2610826745",
+        "2610826746",
+        "2610826769",
+        "2610826776",
+        "2610826778",
+        "2610826785",
+        "2610826786",
+        "2610826792",
+        "2610826794",
+        "2610826799",
+        "2610826800",
+        "2610826805",
+        "2610826808",
+        "2610826810",
+        "2610826811",
+        "2610826818",
+        "2610826819",
+        "2610826826",
+        "2610826827",
+        "2610826828",
+        "2610826829",
+        "2610826830",
+        "2610826832",
+        "2610826836",
+        "2610826838",
+        "2610826841",
+        "2610826842",
+        "2610826843",
+        "2610826847",
+        "2610826858",
+        "2610826872",
+        "2610826875",
+        "2610826876",
+        "2610826882",
+        "2610826884",
+        "2610826885",
+        "2610826886",
+        "2610826887",
+        "2610826901",
+        "2610826902",
+        "2610826903",
+        "2610826910",
+        "2610826912",
+        "2610826921",
+        "2610826922",
+        "2610826924",
+        "2610826925",
+        "2610826927",
+        "2610826928",
+        "2610826929",
+        "2610826930",
+        "2610826931",
+        "2610826948",
+        "2610826952",
+        "2610826954",
+        "2610826957",
+        "2610826958",
+        "2610826960",
+        "2610826961",
+        "2610826962",
+        "2610826990",
+        "2610826991",
+        "2610826995",
+        "2610826999",
+        "2610827001",
+        "2610827031",
+        "2610827036",
+        "2610827037",
+        "2610827039",
+        "2610827056",
+        "2610827058",
+        "2610827060",
+        "2610827068",
+        "2610827070",
+        "2610827073",
+        "2610827074",
+        "2610827075",
+        "2610827078",
+        "2610827080",
+        "2610827087",
+        "2610827090",
+        "2610827100",
+        "2610827101",
+        "2610827102",
+        "2610827104",
+        "2610827105",
+        "2610827107",
+        "2610827108",
+        "2610827111",
+        "2610827112",
+        "2610827113",
+        "2610827114",
+        "2610827115",
+        "2610827116",
+        "2610827117",
+        "2610827118",
+        "2610827119",
+        "2610827120",
+        "2610827121",
+        "2610827122",
+        "2610827123",
+        "2610827124",
+        "2610827125",
+        "2610827126",
+        "2610827127",
+        "2610827128",
+        "2610827129",
+        "2610827130",
+        "2610827131",
+        "2610827132",
+        "2610827133",
+        "2610827134",
+        "2610827135",
+        "2610827136",
+        "2610827137",
+        "2610827138",
+        "2610827139",
+        "2610827140",
+        "2610827141",
+        "2610827142",
+        "2610827143",
+        "2610827144",
+        "2610827145",
+        "2610827146",
+        "2610827147",
+        "2610827148",
+        "2610827149",
+        "2610827150",
+        "2610827151",
+        "2610827152",
+        "2610827153",
+        "2610827154",
+        "2610827155",
+        "2610827156",
+        "2610827157",
+        "2610827158",
+        "2610827159",
+        "2610827160",
+        "2610827161",
+        "2610827162",
+        "2610827163",
+        "2610827164",
+        "2610827165",
+        "2610827166",
+        "2610827167",
+        "2610827168",
+        "2610827169",
+        "2610827170",
+        "2610827171",
+        "2610827172",
+        "2610827173",
+        "2610827174",
+        "2610827175",
+        "2610827176",
+        "2610827177",
+        "2610827178",
+        "2610827179",
+        "2610827180",
+        "2610827181",
+        "2610827182",
+        "2610827183",
+        "2610827184",
+        "2610827185",
+        "2610826998",
+        "2610827000",
+        "2610827016",
+        "2610827020",
+        "2610827043",
+        "2610827055",
+        "2610827203",
+        "2610827208",
+        "2610827212"
+      ],
+      "UID": [
+        "ATU57894559",
+        "ATU38780501"
+      ],
+      "auftrag": [
+        "2610822969",
+        "2610823698",
+        "2610823732",
+        "2610823920",
+        "2610823934",
+        "2610823935",
+        "2610823963",
+        "2610824055",
+        "2610824143",
+        "2610824182",
+        "2610824207",
+        "2610824375",
+        "2610824510",
+        "2610824581",
+        "2610824583",
+        "2610824596",
+        "2610824724",
+        "2610824773",
+        "2610824836",
+        "2610824840",
+        "2610824875",
+        "2610824886",
+        "2610825158",
+        "2610825171",
+        "2610825206",
+        "2610825234",
+        "2610825291",
+        "2610825321",
+        "2610825388",
+        "2610825449",
+        "2610825451",
+        "2610825458",
+        "2610825536",
+        "2610825669",
+        "2610825675",
+        "2610825946",
+        "2610826169",
+        "2610826267",
+        "2610826270",
+        "2610826314",
+        "2610826315",
+        "2610826355",
+        "2610826443",
+        "2610826445",
+        "2610826449",
+        "2610826452",
+        "2610826454",
+        "2610826455",
+        "2610826460",
+        "2610826463",
+        "2610826464",
+        "2610826468",
+        "2610826470",
+        "2610826471",
+        "2610826503",
+        "2610826504",
+        "2610826505",
+        "2610826506",
+        "2610826511",
+        "2610826529",
+        "2610826530",
+        "2610826533",
+        "2610826537",
+        "2610826541",
+        "2610826544",
+        "2610826549",
+        "2610826550",
+        "2610826557",
+        "2610826559",
+        "2610826580",
+        "2610826584",
+        "2610826630",
+        "2610826631",
+        "2610826633",
+        "2610826634",
+        "2610826636",
+        "2610826637",
+        "2610826638",
+        "2610826639",
+        "2610826642",
+        "2610826658",
+        "2610826659",
+        "2610826661",
+        "2610826662",
+        "2610826666",
+        "2610826668",
+        "2610826669",
+        "2610826670",
+        "2610826671",
+        "2610826672",
+        "2610826673",
+        "2610826686",
+        "2610826695",
+        "2610826703",
+        "2610826706",
+        "2610826711",
+        "2610826713",
+        "2610826717",
+        "2610826722",
+        "2610826727",
+        "2610826739",
+        "2610826743",
+        "2610826745",
+        "2610826746",
+        "2610826781",
+        "2610826782",
+        "2610826784",
+        "2610826785",
+        "2610826786",
+        "2610826787",
+        "2610826791",
+        "2610826795",
+        "2610826796",
+        "2610826811",
+        "2610826818",
+        "2610826819",
+        "2610826826",
+        "2610826827",
+        "2610826828",
+        "2610826829",
+        "2610826830",
+        "2610826832",
+        "2610826836",
+        "2610826838",
+        "2610826841",
+        "2610826842",
+        "2610826843",
+        "2610826847",
+        "2610826858",
+        "2610826872",
+        "2610826875",
+        "2610826876",
+        "2610826882",
+        "2610826884",
+        "2610826885",
+        "2610826886",
+        "2610826887",
+        "2610826901",
+        "2610826902",
+        "2610826903",
+        "2610826910",
+        "2610826912",
+        "2610826921",
+        "2610826922",
+        "2610826924",
+        "2610826925",
+        "2610826927",
+        "2610826928",
+        "2610826929",
+        "2610826930",
+        "2610826931",
+        "2610826948",
+        "2610826952",
+        "2610826954",
+        "2610826957",
+        "2610826958",
+        "2610826960",
+        "2610826961",
+        "2610826962",
+        "2610826990",
+        "2610826991",
+        "2610826995",
+        "2610826999",
+        "2610827001",
+        "2610827031",
+        "2610827036",
+        "2610827037",
+        "2610827039",
+        "2610827056",
+        "2610827058",
+        "2610827060",
+        "2610827068",
+        "2610827070",
+        "2610827073",
+        "2610827074",
+        "2610827075",
+        "2610827078",
+        "2610827080",
+        "2610827087",
+        "2610827090",
+        "2610827100",
+        "2610827101",
+        "2610827102",
+        "2610827104",
+        "2610827105",
+        "2610827107",
+        "2610827108",
+        "2610827111",
+        "2610827112",
+        "2610827113",
+        "2610827114",
+        "2610827115",
+        "2610827116",
+        "2610827117",
+        "2610827118",
+        "2610827119",
+        "2610827120",
+        "2610827121",
+        "2610827122",
+        "2610827123",
+        "2610827124",
+        "2610827125",
+        "2610827126",
+        "2610827127",
+        "2610827128",
+        "2610827129",
+        "2610827130",
+        "2610827131",
+        "2610827132",
+        "2610827133",
+        "2610827134",
+        "2610827135",
+        "2610827136",
+        "2610827137",
+        "2610827138",
+        "2610827139",
+        "2610827140",
+        "2610827141",
+        "2610827142",
+        "2610827143",
+        "2610827144",
+        "2610827145",
+        "2610827146",
+        "2610827147",
+        "2610827148",
+        "2610827149",
+        "2610827150",
+        "2610827151",
+        "2610827152",
+        "2610827153",
+        "2610827154",
+        "2610827155",
+        "2610827156",
+        "2610827157",
+        "2610827158",
+        "2610827159",
+        "2610827160",
+        "2610827161",
+        "2610827162",
+        "2610827163",
+        "2610827164",
+        "2610827165",
+        "2610827166",
+        "2610827167",
+        "2610827168",
+        "2610827169",
+        "2610827170",
+        "2610827171",
+        "2610827172",
+        "2610827173",
+        "2610827174",
+        "2610827175",
+        "2610827176",
+        "2610827177",
+        "2610827178",
+        "2610827179",
+        "2610827180",
+        "2610827181",
+        "2610827182",
+        "2610827183",
+        "2610827184",
+        "2610827185",
+        "37353"
+      ],
+      "bank account": "Erste Bank der Österreichische Sparkasse AG Konto-Nr. 40332098700 BLZ 20111",
+      "currency": "EUR",
+      "customer address": [
+        "Sverigestrasse 5, 1220 Wien",
+        "1220 Wien"
+      ],
+      "customer name": "Kia Austria GmbH",
+      "invoice date": "10.10.2026",
+      "invoice number": "2610821112",
+      "sender address": [
+        "Maukenbach 18c, 6240 Radfeld",
+        "A-6300 Wörgl, Innsbrucker Strasse 94",
+        "6241 Radfeld, Maukenbach 18c, Logistikcenter Radfeld",
+        "5500 Bischofshofen, Gasteiner Strasse 34",
+        "6600 Reutte, Mühlerstrasse 45",
+        "5400 Hallein, Salzachstrasse 9",
+        "5204 Straßwalchen, Braunauerstrasse 24",
+        "6275 Stumm, Gewerbegebiet 3",
+        "6380 St. Johann in Tirol, Salzburger Strasse 25",
+        "6020 Innsbruck, Rossaugasse 5b",
+        "6460 Imst, Langgasse 78",
+        "6330 Kufstein, Willy-Graf-Strasse 4",
+        "6405 Pfaffenhofen, Gewerbepark 12"
+      ],
+      "sender name": "Achleitner Reifenzentrum GmbH",
+      "total amount": "113.742,91",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        15,
+        42
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT31 2011 1403 3260 9500",
+      "UID": [
+        "ATU49837903",
+        "ATU55885206"
+      ],
+      "bank account": "Erste Bank der österreichischen Sparkassen AG",
+      "billing address": [
+        "Wagramer Straße 205",
+        "1210 Wien"
+      ],
+      "currency": "€",
+      "customer address": [
+        "Wagramer Straße 205",
+        "1210 Wien"
+      ],
+      "customer name": "Leopoldauer Alm Gastronomiebetriebsgesellschaft m.b.H.",
+      "invoice date": "20.10.2026",
+      "invoice number": "26-0934",
+      "sender address": [
+        "Brünner Str. 282",
+        "1210 Wien"
+      ],
+      "sender name": "R+H Bau GmbH",
+      "total amount": "11.328,00",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        16,
+        43
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT95 2011 1403 3237 7100",
+      "UID": [
+        "ATU61439312",
+        "ATU 50894206"
+      ],
+      "bank account": "ERSTE BANK, ÖSTERREICHISCHE SPARKASSEN AG",
+      "currency": "€",
+      "customer address": [
+        "Landstraßer Hauptstraße 1/Top 22",
+        "1030 Wien"
+      ],
+      "customer name": "Queensway Restaurants GmbH",
+      "invoice date": "18.09.2026",
+      "invoice number": "18935",
+      "sender address": [
+        "Digital-, Offset- & Siebdruck",
+        "inh. gerald mariacher",
+        "1190 wien",
+        "döblinger hauptstraße 60/1",
+        "telefon +43(1)367 80 90",
+        "office@druck19.at"
+      ],
+      "sender name": "DRUCK 19",
+      "total amount": "7.405,20 €",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        17,
+        44
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT86 2011 1501 1617 1100",
+      "Lieferschein": "26/00360",
+      "Lieferscheinnummer": "26/00360",
+      "UID": [
+        "ATU74251702",
+        "DE266686880"
+      ],
+      "auftrag": "26/00178",
+      "bank account": "Intermarket Bank AG",
+      "currency": "EUR",
+      "customer address": [
+        "Am Mittleren Moos 42",
+        "86167 AUGSBURG",
+        "DEUTSCHLAND"
+      ],
+      "customer name": "STARK Fahrzeugbau GmbH",
+      "invoice date": "02.10.2026",
+      "invoice number": "26/00313",
+      "sender address": [
+        "Nordstraße 2",
+        "AT-5301 Eugendorf"
+      ],
+      "sender name": "Wingliner GmbH",
+      "total amount": "59.206,00",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        18,
+        45
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT31 2011 1403 3260 9500",
+      "UID": [
+        "ATU49837903",
+        "ATU39364503"
+      ],
+      "bank account": "Erste Bank d. österr. Sparkassen AG",
+      "currency": "€",
+      "customer address": [
+        "Lindengasse 55",
+        "1070 Wien"
+      ],
+      "customer name": "Eigentümergemeinschaft SOZIALBAU Gemeinnützige Wohnungsaktiengesellschaft",
+      "invoice date": "13.10.2026",
+      "invoice number": "26-0917",
+      "sender address": [
+        "A-1210 Wien",
+        "Brünner Str. 282",
+        "Tel.: +43/1/271 51 17",
+        "Fax: DW 20",
+        "e-mail: office@rhbau.at"
+      ],
+      "sender name": "R+H Bau GmbH",
+      "total amount": "26.160,00",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        19,
+        46
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT86 2011 1501 1617 1100",
+      "Lieferschein": "26/00371",
+      "Lieferscheinnummer": "26/00371",
+      "UID": [
+        "ATU74251702",
+        "DE266686880"
+      ],
+      "auftrag": "26/00179",
+      "bank account": "Intermarket Bank AG",
+      "currency": "EUR",
+      "customer address": [
+        "Am Mittleren Moos 42",
+        "86167 AUGSBURG",
+        "DEUTSCHLAND"
+      ],
+      "customer name": "STARK Fahrzeugbau GmbH",
+      "invoice date": "09.10.2026",
+      "invoice number": "26/00323",
+      "sender address": [
+        "Nordstraße 2",
+        "AT-5301 Eugendorf"
+      ],
+      "sender name": "Wingliner GmbH",
+      "total amount": "28.638,00",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        20,
+        47
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT742011140332098700",
+      "Lieferschein": "2610329450",
+      "Lieferscheinnummer": "2610329450",
+      "UID": [
+        "ATU70463278",
+        "ATU57894559"
+      ],
+      "auftrag": "2610332112",
+      "bank account": "Konto-Nr. 40332098700",
+      "currency": "EUR",
+      "customer address": [
+        "Spielbergstrasse 14",
+        "6391 Fieberbrunn"
+      ],
+      "customer name": "Florian Geisler",
+      "invoice date": "05.10.2026",
+      "invoice number": "2610328403",
+      "sender address": [
+        "Salzburgerstraße 25",
+        "6380 St. Johann"
+      ],
+      "sender name": "Achleitner Reifenzentrum GmbH",
+      "total amount": "732,74",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        23,
+        50
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT712011140338269700",
+      "UID": [
+        "ATU37455703",
+        "ATU73234234"
+      ],
+      "auftrag": "562119/PH JED",
+      "bank account": "INTERMARKET BANK AG, Am Belvedere 1 , A-1100 Wien, Tel. +43 (0) 50100 28900, e-mail: mailbox@intermarket.at",
+      "currency": "€",
+      "customer address": [
+        "Seegasse 9",
+        "1090 Wien"
+      ],
+      "customer name": [
+        "Fonds Kuratorium Wiener Pensionisten",
+        "Wohnhäuser Häuser zum Leben"
+      ],
+      "invoice date": "13.10.2026",
+      "invoice number": "6602",
+      "sender address": [
+        "Südtiroler Gasse 17",
+        "2340 Mödling"
+      ],
+      "sender name": "Cooltex Kältetechnik GmbH",
+      "total amount": "1.127,16",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        24,
+        51
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT812011140450725015",
+      "UID": [
+        "ATU38150601",
+        "CZ25326287"
+      ],
+      "auftrag": "ATA2612794",
+      "bank account": "Erste Bank AG Intermarket",
+      "currency": "EUR",
+      "customer address": [
+        "Porici 2534/24",
+        "678 01 Blansko",
+        "Czech Republic"
+      ],
+      "customer name": [
+        "Pyrotek CZ s.r.o.",
+        "Kamil Kvasnica"
+      ],
+      "invoice date": "07. October 2026",
+      "invoice number": "ATS2632889",
+      "sender address": [
+        "Wolfgang-Pauli-Gasse 3",
+        "Postfach 2",
+        "1147 Wien",
+        "Österreich"
+      ],
+      "sender name": [
+        "Applied Chemicals Handels-GmbH",
+        "Applied Chemicals International Group - Austria"
+      ],
+      "total amount": "316.00",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        25,
+        52
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT812011140450725015",
+      "UID": [
+        "ATU38150601",
+        "CZ27994961"
+      ],
+      "auftrag": "ATA2612699",
+      "bank account": "Erste Bank AG Intermarket, - , BIC: GIBAATWW",
+      "billing address": [
+        "LB Cemix s.r.o.",
+        "Tomas Lachman",
+        "Tovarni ulice 36",
+        "373 12 Borovany",
+        "Czech Republic"
+      ],
+      "currency": "EUR",
+      "customer address": [
+        "Tovarni ulice 36",
+        "373 12 Borovany",
+        "Czech Republic"
+      ],
+      "customer name": [
+        "LB Cemix s.r.o.",
+        "Tomas Lachman"
+      ],
+      "invoice date": "07. October 2026",
+      "invoice number": "ATS2632892",
+      "sender address": [
+        "Wolfgang-Pauli-Gasse 3",
+        "Postfach 2",
+        "1147 Wien",
+        "Österreich"
+      ],
+      "sender name": [
+        "Applied Chemicals",
+        "APPLIED CHEMICALS Handels-GmbH"
+      ],
+      "total amount": "8,442.00",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        25,
+        52
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT742011140332098700",
+      "Lieferschein": "2611024104",
+      "Lieferscheinnummer": "2611024104",
+      "UID": [
+        "ATU57894559",
+        "ATU45038301"
+      ],
+      "auftrag": [
+        "2611026144",
+        "179483"
+      ],
+      "bank account": "Erste Bank der Österreichische Sparkasse AG Konto-Nr. 40332098700 BLZ 20111",
+      "billing address": [
+        "Top Reifen Team GmbH & Co KG",
+        "Hauptstr. 29",
+        "5201 Seekirchen a.Wallersee"
+      ],
+      "currency": "EUR",
+      "customer address": [
+        "Hauptstr. 29",
+        "5201 Seekirchen a.Wallersee",
+        "Clemens-Holzmeister-Straße 6",
+        "A-1100 Wien"
+      ],
+      "customer name": [
+        "Top Reifen Team GmbH & Co KG",
+        "AYVENS AUSTRIA GMBH"
+      ],
+      "invoice date": "04.10.2026",
+      "invoice number": "2611023763",
+      "sender address": [
+        "Langgasse 78/80",
+        "6460 Imst",
+        "A-6300 Wörgl, Innsbrucker Strasse 94",
+        "6241 Radfeld, Maukenbach 18c, Logistikcenter Radfeld",
+        "5500 Bischofshofen, Gasteiner Strasse 34",
+        "6405 Pfaffenhofen, Gewerbepark 12",
+        "6600 Reutte, Mühlerstrasse 45",
+        "5400 Hallein, Salzachstrasse 9",
+        "5204 Straßwalchen Braunauerstrasse 24",
+        "6275 Stumm, Gewerbegebiet 3",
+        "6380 St. Johann in Tirol, Salzburger Strasse 25",
+        "6020 Innsbruck, Rossaugasse 5b",
+        "6460 Imst, Langgasse 78",
+        "6330 Kufstein, Willy-Graf-Strasse 4"
+      ],
+      "sender name": "Achleitner Reifenzentrum GmbH",
+      "total amount": "1.310,23",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        26,
+        53
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT742011140332098700",
+      "Lieferschein": [
+        "2610827279",
+        "2610827236",
+        "2610827240",
+        "2610827284",
+        "2610827234",
+        "2610827237",
+        "2610827278",
+        "2610827224",
+        "2610827452",
+        "2610827451",
+        "2610827280",
+        "2610827222",
+        "2610827223",
+        "2610827235",
+        "2610827288",
+        "2610827239",
+        "2610827285",
+        "2610827244",
+        "2610827544",
+        "2610827408",
+        "2610827286",
+        "2610827409",
+        "2610827238",
+        "2610827227",
+        "2610827229",
+        "2610827230",
+        "2610827255",
+        "2610827248",
+        "2610827253",
+        "2610827258",
+        "2610827426",
+        "2610827274",
+        "2610827276",
+        "2610827272",
+        "2610827287",
+        "2610827290",
+        "2610827291",
+        "2610827318",
+        "2610827319",
+        "2610827321",
+        "2610827322",
+        "2610827324",
+        "2610827325",
+        "2610827427",
+        "2610827371",
+        "2610827372",
+        "2610827370",
+        "2610827378",
+        "2610827383",
+        "2610827381",
+        "2610827382",
+        "2610827384",
+        "2610827410",
+        "2610827414",
+        "2610827415",
+        "2610827417",
+        "2610827418",
+        "2610827419",
+        "2610827421",
+        "2610827423",
+        "2610827424",
+        "2610827425",
+        "2610827426",
+        "2610827430",
+        "2610827431",
+        "2610827432",
+        "2610827436",
+        "2610827437",
+        "2610827438",
+        "2610827449",
+        "2610827453",
+        "2610827458",
+        "2610827467",
+        "2610827470",
+        "2610827475",
+        "2610827478",
+        "2610827483",
+        "2610827485",
+        "2610827486",
+        "2610827493",
+        "2610827494",
+        "2610827515",
+        "2610827518",
+        "2610827519",
+        "2610827522",
+        "2610827523",
+        "2610827525",
+        "2610827527",
+        "2610827529",
+        "2610827544",
+        "2610827546",
+        "2610827548",
+        "2610827551",
+        "2610827552",
+        "2610827553",
+        "2610827555",
+        "2610827556",
+        "2610827557",
+        "2610827559",
+        "2610827573",
+        "2610827576",
+        "2610827579",
+        "2610827581",
+        "2610827582",
+        "2610827583",
+        "2610827584",
+        "2610827588",
+        "2610827599",
+        "2610827605",
+        "2610827616",
+        "2610827617",
+        "2610827618",
+        "2610827621",
+        "2610827622",
+        "2610827647",
+        "2610827648",
+        "2610827650",
+        "2610827652",
+        "2610827653",
+        "2610827657",
+        "2610827659",
+        "2610827693",
+        "2610827694",
+        "2610827695",
+        "2610827715",
+        "2610827724",
+        "2610827725",
+        "2610827727",
+        "2610827730",
+        "2610827731",
+        "2610827732",
+        "2610827733",
+        "2610827734",
+        "2610827735",
+        "2610827737",
+        "2610827739",
+        "2610827750",
+        "2610827751",
+        "2610827773",
+        "2610827774",
+        "2610827777",
+        "2610827784",
+        "2610827817",
+        "2610827827",
+        "2610827829",
+        "2610827832",
+        "2610827834",
+        "2610827835",
+        "2610827839"
+      ],
+      "Lieferscheinnummer": [
+        "2610827279",
+        "2610827236",
+        "2610827240",
+        "2610827284",
+        "2610827234",
+        "2610827237",
+        "2610827278",
+        "2610827224",
+        "2610827452",
+        "2610827451",
+        "2610827280",
+        "2610827222",
+        "2610827223",
+        "2610827235",
+        "2610827288",
+        "2610827239",
+        "2610827285",
+        "2610827244",
+        "2610827544",
+        "2610827408",
+        "2610827286",
+        "2610827409",
+        "2610827238",
+        "2610827227",
+        "2610827229",
+        "2610827230",
+        "2610827255",
+        "2610827248",
+        "2610827253",
+        "2610827258",
+        "2610827426",
+        "2610827274",
+        "2610827276",
+        "2610827272",
+        "2610827287",
+        "2610827290",
+        "2610827291",
+        "2610827318",
+        "2610827319",
+        "2610827321",
+        "2610827322",
+        "2610827324",
+        "2610827325",
+        "2610827427",
+        "2610827371",
+        "2610827372",
+        "2610827370",
+        "2610827378",
+        "2610827383",
+        "2610827381",
+        "2610827382",
+        "2610827384",
+        "2610827410",
+        "2610827414",
+        "2610827415",
+        "2610827417",
+        "2610827418",
+        "2610827419",
+        "2610827421",
+        "2610827423",
+        "2610827424",
+        "2610827425",
+        "2610827426",
+        "2610827430",
+        "2610827431",
+        "2610827432",
+        "2610827436",
+        "2610827437",
+        "2610827438",
+        "2610827449",
+        "2610827453",
+        "2610827458",
+        "2610827467",
+        "2610827470",
+        "2610827475",
+        "2610827478",
+        "2610827483",
+        "2610827485",
+        "2610827486",
+        "2610827493",
+        "2610827494",
+        "2610827515",
+        "2610827518",
+        "2610827519",
+        "2610827522",
+        "2610827523",
+        "2610827525",
+        "2610827527",
+        "2610827529",
+        "2610827544",
+        "2610827546",
+        "2610827548",
+        "2610827551",
+        "2610827552",
+        "2610827553",
+        "2610827555",
+        "2610827556",
+        "2610827557",
+        "2610827559",
+        "2610827573",
+        "2610827576",
+        "2610827579",
+        "2610827581",
+        "2610827582",
+        "2610827583",
+        "2610827584",
+        "2610827588",
+        "2610827599",
+        "2610827605",
+        "2610827616",
+        "2610827617",
+        "2610827618",
+        "2610827621",
+        "2610827622",
+        "2610827647",
+        "2610827648",
+        "2610827650",
+        "2610827652",
+        "2610827653",
+        "2610827657",
+        "2610827659",
+        "2610827693",
+        "2610827694",
+        "2610827695",
+        "2610827715",
+        "2610827724",
+        "2610827725",
+        "2610827727",
+        "2610827730",
+        "2610827731",
+        "2610827732",
+        "2610827733",
+        "2610827734",
+        "2610827735",
+        "2610827737",
+        "2610827739",
+        "2610827750",
+        "2610827751",
+        "2610827773",
+        "2610827774",
+        "2610827777",
+        "2610827784",
+        "2610827817",
+        "2610827827",
+        "2610827829",
+        "2610827832",
+        "2610827834",
+        "2610827835",
+        "2610827839"
+      ],
+      "UID": [
+        "ATU57894559",
+        "ATU38780501"
+      ],
+      "auftrag": [
+        "2610823873",
+        "2610824182",
+        "2610824236",
+        "2610824327",
+        "2610824509",
+        "2610824728",
+        "2610824969",
+        "2610825020",
+        "2610825102",
+        "2610825321",
+        "2610825323",
+        "2610825324",
+        "2610825452",
+        "2610825465",
+        "2610826008",
+        "2610826117",
+        "2610826293",
+        "2610826497",
+        "2610826813",
+        "2610826894",
+        "2610826918",
+        "2610827081",
+        "2610827096",
+        "2610827100",
+        "2610827102",
+        "2610827108",
+        "2610827109",
+        "2610827111",
+        "2610827118",
+        "2610827119",
+        "2610827122",
+        "2610827124",
+        "2610827126",
+        "2610827127",
+        "2610827140",
+        "2610827146",
+        "2610827151",
+        "2610827154",
+        "2610827156",
+        "2610827158",
+        "2610827159",
+        "2610827162",
+        "2610827188",
+        "2610827190",
+        "2610827191",
+        "2610827192",
+        "2610827201",
+        "2610827202",
+        "2610827203",
+        "2610827204",
+        "2610827206",
+        "2610827207",
+        "2610827210",
+        "2610827218",
+        "2610827224",
+        "2610827225",
+        "2610827226",
+        "2610827228",
+        "2610827229",
+        "2610827234",
+        "2610827238",
+        "2610827243",
+        "2610827244",
+        "2610827246",
+        "2610827266",
+        "2610827268",
+        "2610827272",
+        "2610827276",
+        "2610827277",
+        "2610827278",
+        "2610827280",
+        "2610827287",
+        "2610827305",
+        "2610827308",
+        "2610827322",
+        "2610827330",
+        "2610827331",
+        "2610827333",
+        "2610827337",
+        "2610827347",
+        "2610827355",
+        "2610827356",
+        "2610827365",
+        "2610827372",
+        "2610827375",
+        "2610827377",
+        "2610827383",
+        "2610827384",
+        "2610827397",
+        "2610827398",
+        "2610827399",
+        "2610827400",
+        "2610827401",
+        "2610827408",
+        "2610827414",
+        "2610827415",
+        "2610827417",
+        "2610827418",
+        "2610827419",
+        "2610827421",
+        "2610827423",
+        "2610827424",
+        "2610827425",
+        "2610827426",
+        "2610827430",
+        "2610827431",
+        "2610827432",
+        "2610827436",
+        "2610827437",
+        "2610827438",
+        "2610827449",
+        "2610827453",
+        "2610827458",
+        "2610827467",
+        "2610827470",
+        "2610827475",
+        "2610827478",
+        "2610827483",
+        "2610827485",
+        "2610827486",
+        "2610827493",
+        "2610827494",
+        "2610827515",
+        "2610827518",
+        "2610827519",
+        "2610827522",
+        "2610827523",
+        "2610827525",
+        "2610827527",
+        "2610827529",
+        "2610827544",
+        "2610827546",
+        "2610827548",
+        "2610827551",
+        "2610827552",
+        "2610827553",
+        "2610827555",
+        "2610827556",
+        "2610827557",
+        "2610827559",
+        "2610827573",
+        "2610827576",
+        "2610827579",
+        "2610827581",
+        "2610827582",
+        "2610827583",
+        "2610827584",
+        "2610827588",
+        "2610827599",
+        "2610827605",
+        "2610827616",
+        "2610827617",
+        "2610827618",
+        "2610827621",
+        "2610827622",
+        "2610827647",
+        "2610827648",
+        "2610827650",
+        "2610827652",
+        "2610827653",
+        "2610827657",
+        "2610827659",
+        "2610827693",
+        "2610827694",
+        "2610827695",
+        "2610827715",
+        "2610827724",
+        "2610827725",
+        "2610827727",
+        "2610827730",
+        "2610827731",
+        "2610827732",
+        "2610827733",
+        "2610827734",
+        "2610827735",
+        "2610827737",
+        "2610827739",
+        "2610827750",
+        "2610827751",
+        "2610827773",
+        "2610827774",
+        "2610827777",
+        "2610827784",
+        "2610827817",
+        "2610827827",
+        "2610827829",
+        "2610827832",
+        "2610827834",
+        "2610827835",
+        "2610827839"
+      ],
+      "bank account": "Erste Bank der Österreichische Sparkasse AG Konto-Nr. 40332098700 BLZ 20111",
+      "currency": "EUR",
+      "customer address": [
+        "Sverigestrasse 5",
+        "1220 Wien"
+      ],
+      "customer name": "Kia Austria GmbH",
+      "invoice date": "17.10.2026",
+      "invoice number": "2610821228",
+      "sender address": [
+        "Maukenbach 18c",
+        "6240 Radfeld",
+        "A-6300 Wörgl, Innsbrucker Strasse 94",
+        "T: +43 5332 7811",
+        "F: +43 5332 7811 71",
+        "reifenhandel@achleitner.com",
+        "www.achleitner.com"
+      ],
+      "sender name": "Achleitner Reifenzentrum GmbH",
+      "total amount": "97.485,12",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        54
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": [
+        "AT31 2011 1403 3260 9500",
+        "AT312011140332609500"
+      ],
+      "UID": [
+        "ATU49837903",
+        "ATU39364503"
+      ],
+      "bank account": [
+        "INTERMARKET BANK AG",
+        "Erste Bank d. österr. Sparkassen AG"
+      ],
+      "currency": "€",
+      "customer address": [
+        "Lindengasse 55",
+        "1070 Wien"
+      ],
+      "customer name": "Eigentümergemeinschaft SOZIALBAU Gemeinnützige Wohnungsaktiengesellschaft",
+      "invoice date": "13.10.2026",
+      "invoice number": "26-0918",
+      "sender address": "A-1210 Wien, Brünner Str. 282",
+      "sender name": "R+H Bau GMBH",
+      "total amount": "10.824,00",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        55
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": [
+        "AT31 2011 1403 3260 9500",
+        "AT312011140332609500"
+      ],
+      "UID": [
+        "ATU39364503",
+        "ATU49837903"
+      ],
+      "bank account": "INTERMARKET BANK AG",
+      "currency": "€",
+      "customer address": [
+        "Lindengasse 55",
+        "1070 Wien"
+      ],
+      "customer name": "Eigentümergemeinschaft SOZIALBAU Gemeinnützige Wohnungsaktiengesellschaft",
+      "invoice date": "13.10.2026",
+      "invoice number": "26-0919",
+      "sender address": "A-1210 Wien, Brünner Str. 282",
+      "sender name": "R+H Bau GMBH",
+      "total amount": "10.860,00",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        56
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT86 2011 1501 1617 1100",
+      "Lieferschein": "26/00372",
+      "Lieferscheinnummer": "26/00372",
+      "UID": [
+        "ATU74251702",
+        "DE266686880"
+      ],
+      "auftrag": "26/00180",
+      "bank account": "Intermarket Bank AG",
+      "currency": "EUR",
+      "customer address": [
+        "Am Mittleren Moos 42",
+        "86167 AUGSBURG",
+        "DEUTSCHLAND"
+      ],
+      "customer name": "STARK Fahrzeugbau GmbH",
+      "invoice date": "09.10.2026",
+      "invoice number": "26/00324",
+      "sender address": [
+        "Nordstraße 2",
+        "AT-5301 Eugendorf"
+      ],
+      "sender name": "Wingliner GmbH",
+      "total amount": "28.058,00",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        57
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT91 2011 1403 3235 0400",
+      "UID": "ATU67036539",
+      "auftrag": "113719",
+      "bank account": "Bankverbindung: IBAN_AT91 2011 1403 3235 0400, BIC: GIBAATWW",
+      "currency": "EUR",
+      "customer address": [
+        "Feuerwehrplatz 3",
+        "2442 Ebreichsdorf"
+      ],
+      "customer name": "Huber-Schaarschmidt Susann Mag. vet.med.",
+      "invoice date": "07.10.2026",
+      "invoice number": "2703017",
+      "sender address": [
+        "Feuerwehrplatz 3",
+        "2442 Ebreichsdorf"
+      ],
+      "sender name": "Huber-Schaarschmidt Susann Mag. vet.med.",
+      "total amount": "1.110,90 EUR",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        62
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT86 2011 1501 1617 1100",
+      "UID": [
+        "DE370009332",
+        "UID-ATU74251702"
+      ],
+      "bank account": "Intermarket Bank AG",
+      "currency": "EUR",
+      "customer address": [
+        "In der Webel 12",
+        "32351 STEMWEDE-NIEDERMEHNEN",
+        "DEUTSCHLAND"
+      ],
+      "customer name": [
+        "Leasemen Mobility",
+        "Jana Mann"
+      ],
+      "invoice date": "08.10.2026",
+      "invoice number": "26/00321",
+      "sender address": [
+        "Nordstraße 2",
+        "AT-5301 Eugendorf"
+      ],
+      "sender name": "Wingliner GmbH",
+      "total amount": "1.500,00",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        63
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT742011140332098700",
+      "Lieferschein": [
+        "2610329635",
+        "2610329636"
+      ],
+      "Lieferscheinnummer": [
+        "2610329635",
+        "2610329636"
+      ],
+      "UID": [
+        "ATU57894559",
+        "ATU31773006"
+      ],
+      "auftrag": [
+        "2610331838",
+        "2610331839"
+      ],
+      "bank account": "Erste Bank der Österreichische Sparkasse AG Konto-Nr. 40332098700 BLZ 20111",
+      "billing address": [
+        "Kirchberger Straße 12",
+        "6370 Kitzbühel",
+        "Austria"
+      ],
+      "currency": "EUR",
+      "customer address": [
+        "Kirchberger Straße 12",
+        "6370 Kitzbühel",
+        "Austria"
+      ],
+      "customer name": "Rotes Kreuz Bezirksstelle Kitzbühel",
+      "invoice date": "07.10.2026",
+      "invoice number": "2610328564",
+      "sender address": [
+        "Salzburgerstraße 25",
+        "6380 St. Johann in Tirol",
+        "Austria"
+      ],
+      "sender name": "Achleitner Reifenzentrum GmbH",
+      "total amount": "1.114,03",
+      "delivery_notes": [
+        {
+          "document_type": "DELIVERY_NOTE",
+          "delivery note number": "2610329635",
+          "delivery date": "07.10.2026",
+          "order number": "2610331838",
+          "customer number": "237010",
+          "customer name": "Rotes Kreuz",
+          "sender name": "ACHLEITNER REIFENZENTRUM GMBH",
+          "delivery address": [
+            "Rotes Kreuz",
+            "Bezirksstelle Kitzbühel",
+            "Kirchberger Straße 12",
+            "6370 Kitzbühel"
+          ],
+          "items": [
+            {
+              "item code": "T-215978",
+              "item description": "VIKI WI 205/60R16 96 H XL WINTECHNEWGEN M&S 3PMSF TL Rollwiderstand:B Nassgriff:C Typ:B dB:72",
+              "item quantity": "4,00"
+            },
+            {
+              "item code": "S1111",
+              "item description": "PKW/SUV NEUREIFENSERVICEP.BIS 17\" RADWECHSEL/MONTAGE/WUCHTEN",
+              "item quantity": "4,00"
+            },
+            {
+              "item code": "S0510",
+              "item description": "PKW/SUV/LLKW ALTREIFEN BIS 17\"",
+              "item quantity": "4,00"
+            },
+            {
+              "item code": "S8254",
+              "item description": "DEPOT OHNE RADWECHSEL BIS 17 ZOLL",
+              "item quantity": "4,00"
+            }
+          ],
+          "match_method": [
+            "DOCUMENT_NUMBER",
+            "ORDER_NUMBER"
+          ],
+          "match_confidence": "high"
+        },
+        {
+          "document_type": "DELIVERY_NOTE",
+          "delivery note number": "2610329636",
+          "delivery date": "07.10.2026",
+          "order number": "2610331839",
+          "customer number": "237010",
+          "customer name": "Rotes Kreuz",
+          "sender name": "ACHLEITNER REIFENZENTRUM GMBH",
+          "delivery address": [
+            "Rotes Kreuz",
+            "Bezirksstelle Kitzbühel",
+            "Kirchberger Straße 12",
+            "6370 Kitzbühel"
+          ],
+          "items": [
+            {
+              "item code": "T-215978",
+              "item description": "VIKI WI 205/60R16 96 H XL WINTECHNEWGEN M&S 3PMSF TL Rollwiderstand:B Nassgriff:C Typ:B dB:72",
+              "item quantity": "4,00"
+            },
+            {
+              "item code": "S1111",
+              "item description": "PKW/SUV NEUREIFENSERVICEP.BIS 17\" RADWECHSEL/MONTAGE/WUCHTEN",
+              "item quantity": "4,00"
+            },
+            {
+              "item code": "S0510",
+              "item description": "PKW/SUV/LLKW ALTREIFEN BIS 17\"",
+              "item quantity": "4,00"
+            },
+            {
+              "item code": "S8254",
+              "item description": "DEPOT OHNE RADWECHSEL BIS 17 ZOLL",
+              "item quantity": "4,00"
+            }
+          ],
+          "match_method": [
+            "DOCUMENT_NUMBER",
+            "ORDER_NUMBER"
+          ],
+          "match_confidence": "high"
+        }
+      ],
+      "bills_of_lading": [],
+      "source_records": [
+        64
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT742011140332098700",
+      "Lieferschein": "2610330348",
+      "Lieferscheinnummer": "2610330348",
+      "UID": [
+        "ATU57894559",
+        "ATU66466415"
+      ],
+      "auftrag": "2610333560",
+      "bank account": "Konto-Nr. 40332098700",
+      "billing address": [
+        "Hötzendorfstr. 2",
+        "A-6330 Kufstein"
+      ],
+      "currency": "EUR",
+      "customer address": [
+        "Hötzendorfstr. 2",
+        "6330 Kufstein"
+      ],
+      "customer name": "Sappl Verwaltungs- und Betriebs GmbH",
+      "invoice date": "16.10.2026",
+      "invoice number": "2610329216",
+      "sender address": [
+        "Salzburgerstraße 25",
+        "6380 St. Johann"
+      ],
+      "sender name": "Achleitner Reifenzentrum GMBH",
+      "total amount": "102,26",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        65
+      ]
+    },
+    {
+      "document_type": "INVOICE",
+      "IBAN": "AT742011140332098700",
+      "Lieferschein": "2610126381",
+      "Lieferscheinnummer": "2610126381",
+      "UID": [
+        "ATU57894559",
+        "ATU70749069"
+      ],
+      "auftrag": "2610128687",
+      "bank account": "Erste Bank der Österreichische Sparkasse AG Konto-Nr. 40332098700 BLZ 20111",
+      "currency": "EUR",
+      "customer address": [
+        "Luna 32",
+        "6250 Kundl"
+      ],
+      "customer name": "Truck Center GmbH",
+      "invoice date": "30.09.2026",
+      "invoice number": "2610125578",
+      "sender address": [
+        "Innsbruckerstraße 94",
+        "6300 Wörgl"
+      ],
+      "sender name": "Achleitner Reifenzentrum GMBH",
+      "total amount": "108,82",
+      "delivery_notes": [],
+      "bills_of_lading": [],
+      "source_records": [
+        66
+      ]
+    }
+  ],
+  "unmatched_delivery_notes": [
+    {
+      "document_type": "DELIVERY_NOTE",
+      "delivery note number": "2610824925",
+      "delivery date": "10.09.2026",
+      "order number": "2610823467",
+      "customer number": "123307",
+      "customer name": "Walter Maier GmbH & Co KG",
+      "sender name": "ACHLEITNER REIFENZENTRUM GMBH",
+      "delivery address": [
+        "Walter Maier GmbH & Co KG",
+        "Kia AT165",
+        "Dr.-Alfons-Heinzle-Str. 88",
+        "6840 Götzis"
+      ],
+      "items": [
+        {
+          "item code": "TK100K260L",
+          "item description": "TK100K260L, TK100K260E, STAHL G6H40 AK100 14 ZOLL, +FALK 175/65R14 HS02 86T PICANTO JA, LAUFRICHTUNG LINKS",
+          "item quantity": "20,00"
+        },
+        {
+          "item code": "TK100K260R",
+          "item description": "TK100K260R, TK100K260E, STAHL G6H40 AK100 14 ZOLL, +FALK 175/65R14 HS02 86T PICANTO JA, LAUFRICHTUNG RECHTS",
+          "item quantity": "20,00"
+        },
+        {
+          "item code": "TK100K201L",
+          "item description": "TK100K201L, TK100K201E, STAHL H8H40 AK000 15 ZOLLX15, +FALK 185/65R15 HS02 STONIC YB, LAUFRICHTUNG LINKS",
+          "item quantity": "30,00"
+        },
+        {
+          "item code": "TK100K201R",
+          "item description": "TK100K201R, TK100K201E, STAHL H8H40 AK000 15 ZOLLX15, +FALK 185/65R15 HS02 STONIC YB, LAUFRICHTUNG RECHTS",
+          "item quantity": "30,00"
+        },
+        {
+          "item code": "TK100K766L",
+          "item description": "TK100K766L, TK100K766E, STAHL DZGG405ADD01X16 5/114,3 46, +SEMP 205/55R6 SG5 91H K4",
+          "item quantity": "20,00"
+        }
+      ]
+    },
+    {
+      "document_type": "DELIVERY_NOTE",
+      "delivery note number": "2610827376",
+      "delivery date": "12.10.2026",
+      "order number": "2015101024250",
+      "customer number": "37353",
+      "carrier name": "SCHENKER",
+      "customer name": "Josef Schallgruber GmbH",
+      "sender name": "ACHLEITNER REIFENZENTRUM GMBH",
+      "delivery address": [
+        "Josef Schallgruber GmbH",
+        "Josef Jesserniggstraße 10",
+        "2000 Stockerau"
+      ],
+      "items": [
+        {
+          "item code": "TK100K211AL",
+          "item description": "TK100K211AL TK100K211A RC34 6X16 4/100 49 SG + FALK 195/55R16 HS02 87H STONIC YB LAUFRICHTUNG LINKS ORIGINALVERSCHRAUBUNG !!",
+          "item quantity": "2,00"
+        },
+        {
+          "item code": "TK100K211AR",
+          "item description": "TK100K211AR TK100K211A RC34 6X16 4/100 49 SG + FALK 195/55R16 HS02 87H STONIC YB LAUFRICHTUNG RECHTS ORIGINALVERSCHRAUBUNG !!",
+          "item quantity": "2,00"
+        }
+      ]
+    },
+    {
+      "document_type": "DELIVERY_NOTE",
+      "delivery note number": "2610826801",
+      "delivery date": "06.10.2026",
+      "order number": "2015101024043",
+      "customer number": "37353",
+      "carrier name": "SCHENKER",
+      "customer name": "Elsenbaumer GmbH",
+      "sender name": "ACHLEITNER REIFENZENTRUM GMBH",
+      "delivery address": [
+        "Elsenbaumer GmbH",
+        "Lobisserweg 2",
+        "9342 Gurk"
+      ],
+      "items": [
+        {
+          "item code": "TK100K218L",
+          "item description": "TK100K218 ALU J7400 ADE06X 16 ZOLL 6,5X16 5/114,3 +FALK 205/60R16 HS02 96H SUV Ceed LAUFRICHTUNG LINKS ORIGINALVERSCHRAUBUNG",
+          "item quantity": "2,00"
+        },
+        {
+          "item code": "TK100K218R",
+          "item description": "TK100K218 ALU J7400 ADE06X 16 ZOLL 6,5X16 5/114,3 +FALK 205/60R16 HS02 96H SUV Ceed LAUFRICHTUNG RECHTS ORIGINALVERSCHRAUBUNG",
+          "item quantity": "2,00"
+        }
+      ]
+    }
+  ],
+  "unmatched_bills_of_lading": []
+}
